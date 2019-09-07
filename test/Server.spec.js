@@ -105,4 +105,74 @@ describe("Server", () => {
             });
         });
     });
+
+    describe("when a related file changes", () => {
+        const servePath = path.join(TEST_DATA, "example-relations");
+        const filePath = path.join(servePath, "stuff.js");
+        let fileContent;
+
+        beforeEach(() => {
+            fileContent = fs.readFileSync(filePath, "utf8");
+        });
+
+        afterEach(() => {
+            fs.writeFileSync(filePath, fileContent, "utf8");
+        });
+
+        it('should send a "reload" message to the client', () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+
+            const server = new Server({ servePath });
+            let resolveReady;
+            const openPromise = new Promise(
+                resolve => (resolveReady = resolve)
+            );
+
+            return runBlockInServer(server, address => {
+                const client = new Promise((resolve, reject) => {
+                    const ws = new WebSocket(
+                        `ws://localhost:${address.port}/__livestyle`
+                    );
+                    const timeout = setTimeout(() => {
+                        reject(new Error("message not received"));
+                    }, 1000);
+
+                    ws.on("open", () => {
+                        ws.send(
+                            JSON.stringify({
+                                type: "register",
+                                args: { pathname: "/stuff.html" }
+                            })
+                        );
+
+                        resolveReady();
+                    });
+
+                    ws.on("error", e => {
+                        clearTimeout(timeout);
+                        reject(e);
+                    });
+
+                    ws.on("message", msg => {
+                        if (msg === "reload") {
+                            clearTimeout(timeout);
+                            resolve();
+                        } else {
+                            reject(new Error("message was incorrect"));
+                        }
+                    });
+                });
+
+                return openPromise.then(() => {
+                    fs.writeFileSync(
+                        filePath,
+                        fileContent.replace("Hello", "Hello!"),
+                        "utf8"
+                    );
+
+                    return client;
+                });
+            });
+        });
+    });
 });
