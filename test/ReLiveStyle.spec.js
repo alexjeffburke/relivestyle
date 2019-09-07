@@ -91,6 +91,22 @@ describe("ReLiveStyle", () => {
         });
     });
 
+    describe("#loadHtmlAssetAndPopulate", () => {
+        it("should load assets", () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new ReLiveStyle({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            return expect(
+                () => instance.loadHtmlAssetAndPopulate(assetPath),
+                "to be fulfilled"
+            ).then(() => {
+                expect(instance.assetGraph._assets.size, "to equal", 2);
+            });
+        });
+    });
+
     describe("#notifyClientForFsPath", () => {
         it("should notify a client for a corresponding asset path", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
