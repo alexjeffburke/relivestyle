@@ -69,6 +69,26 @@ describe("ReLiveStyle", () => {
                 "to be undefined"
             ).then(() => loadPromise);
         });
+
+        it("should ignore any assets if that do not exist", () => {
+            const servePath = path.join(TEST_DATA, "example-project");
+            instance = new ReLiveStyle({ servePath });
+
+            const assetPath = "/stuff.ico";
+            const loadPromise = instance.loadAsset(assetPath);
+
+            return expect(
+                instance.promiseByAssetPath[assetPath],
+                "to be defined"
+            )
+                .then(() => loadPromise)
+                .then(() => {
+                    expect(
+                        instance.promiseByAssetPath[assetPath],
+                        "to be undefined"
+                    );
+                });
+        });
     });
 
     describe("#notifyClientForFsPath", () => {
