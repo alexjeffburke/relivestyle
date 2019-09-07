@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+const wrap = require("@gustavnikolaj/async-main-wrap");
+const yargs = require("yargs");
+
+const cli = require("../lib/cli");
+
+const configureArgs = () => yargs =>
+  yargs.positional("directory", {
+    type: "string"
+  });
+
+const processArgs = () =>
+  yargs
+    .usage("$0 <directory>")
+    .command(
+      "* <directory>",
+      "Start reliving styles from a the specified directory.",
+      configureArgs()
+    )
+    .help().argv;
+
+const processArgsAndExecute = cwd => {
+  const argv = processArgs();
+  return cli(cwd, argv).then(() => process.exit(0));
+};
+
+wrap(processArgsAndExecute)(process.cwd());
