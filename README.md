@@ -3,6 +3,10 @@
 Relivestyle is a small web server that refreshes pages served
 by it when they, or any assets they link to, change on disk.
 
+[![NPM version](https://img.shields.io/npm/v/relivestyle.svg)](https://www.npmjs.com/package/relivestyle)
+[![Build Status](https://img.shields.io/travis/alexjeffburke/relivestyle/master.svg)](https://travis-ci.org/alexjeffburke/relivestyle)
+[![Coverage Status](https://img.shields.io/coveralls/alexjeffburke/relivestyle/master.svg)](https://coveralls.io/r/alexjeffburke/relivestyle?branch=master)
+
 ## Introduction
 
 Modern JavaScript tooling is extremely powerful but often represents a
