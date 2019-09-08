@@ -5,6 +5,7 @@ const WebSocket = require("ws");
 const Server = require("../lib/Server");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
+const TIMEOUT_FOR_MESSAGE = 1950; // just under mocha default
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(() => resolve(), ms));
@@ -71,7 +72,7 @@ describe("Server", () => {
                     );
                     const timeout = setTimeout(() => {
                         reject(new Error("message not received"));
-                    }, 1000);
+                    }, TIMEOUT_FOR_MESSAGE);
 
                     ws.on("open", () => {
                         ws.send(
@@ -139,7 +140,7 @@ describe("Server", () => {
                     );
                     const timeout = setTimeout(() => {
                         reject(new Error("message not received"));
-                    }, 1000);
+                    }, TIMEOUT_FOR_MESSAGE);
 
                     ws.on("open", () => {
                         ws.send(
