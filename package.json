@@ -16,6 +16,10 @@
     "test": "mocha"
   },
   "author": "Alex J Burke <alex@alexjeffburke.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexjeffburke/relivestyle.git"
+  },
   "license": "MIT",
   "dependencies": {
     "@gustavnikolaj/async-main-wrap": "^3.0.1",
