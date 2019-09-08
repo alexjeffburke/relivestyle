@@ -21,6 +21,7 @@
     "@gustavnikolaj/async-main-wrap": "^3.0.1",
     "assetgraph": "^6.0.0",
     "chokidar": "^3.0.2",
+    "express": "^4.17.1",
     "serve-static": "^1.14.1",
     "sockette": "^2.0.6",
     "ws": "^7.1.2"
@@ -34,7 +35,6 @@
     "eslint-plugin-node": "^9.2.0",
     "eslint-plugin-prettier": "^3.0.0",
     "eslint-plugin-standard": "^4.0.1",
-    "express": "^4.17.1",
     "mocha": "^6.2.0",
     "nyc": "^14.1.1",
     "prettier": "~1.18.2",
