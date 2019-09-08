@@ -6,9 +6,14 @@ const yargs = require("yargs");
 const cli = require("../lib/cli");
 
 const configureArgs = () => yargs =>
-  yargs.positional("directory", {
-    type: "string"
-  });
+  yargs
+    .positional("directory", {
+      type: "string"
+    })
+    .option("port", {
+      type: "number",
+      describe: "Optionally specify a port on which to run the server."
+    });
 
 const processArgs = () =>
   yargs
