@@ -6,6 +6,10 @@ const Server = require("../lib/Server");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(() => resolve(), ms));
+}
+
 function runBlockInServer(server, blockFn) {
     const closeServer = () => new Promise(resolve => server.close(resolve));
 
@@ -171,6 +175,49 @@ describe("Server", () => {
                     );
 
                     return client;
+                });
+            });
+        });
+
+        it("should behave correctly even when registration takes some time", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+
+            const server = new Server({ servePath });
+
+            return runBlockInServer(server, async address => {
+                fs.writeFileSync(
+                    filePath,
+                    fileContent.replace("Hello", "Hello!"),
+                    "utf8"
+                );
+
+                await delay(1000);
+
+                return new Promise((resolve, reject) => {
+                    const ws = new WebSocket(
+                        `ws://localhost:${address.port}/__livestyle`
+                    );
+
+                    ws.on("open", () => {
+                        ws.send(
+                            JSON.stringify({
+                                type: "register",
+                                args: { pathname: "/stuff.html" }
+                            })
+                        );
+                    });
+
+                    ws.on("error", e => {
+                        reject(e);
+                    });
+
+                    ws.on("message", msg => {
+                        if (msg === "reload") {
+                            resolve();
+                        } else {
+                            reject(new Error("message was incorrect"));
+                        }
+                    });
                 });
             });
         });
