@@ -20,7 +20,7 @@ Relivestyle watches the pages and related assets that make up your small
 project and instantly reloads any browser that loaded them whenever any
 changes are detected. This is not a totally new idea, and if it sounds
 familiar then please let us make a huge nod to
-[livestyle](https://github.com/One.com/livestyle))
+[livestyle](https://github.com/One-com/livestyle))
 that heavily inspired this effort.
 
 ## Use
