@@ -93,7 +93,7 @@ describe("ReLiveStyle", () => {
     });
 
     describe("#loadHtmlAssetAndPopulate", () => {
-        it("should load assets", () => {
+        it("should populate assets", () => {
             const servePath = path.join(TEST_DATA, "example-relations");
             instance = new ReLiveStyle({ servePath });
 
@@ -103,7 +103,45 @@ describe("ReLiveStyle", () => {
                 () => instance.loadHtmlAssetAndPopulate(assetPath),
                 "to be fulfilled"
             ).then(() => {
-                expect(instance.assetGraph._assets.size, "to equal", 2);
+                expect(
+                    instance.assetGraph._assets.size,
+                    "to be greater than",
+                    1
+                );
+            });
+        });
+
+        it("should include type JavaScript", () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new ReLiveStyle({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            return expect(
+                () => instance.loadHtmlAssetAndPopulate(assetPath),
+                "to be fulfilled"
+            ).then(() => {
+                expect(
+                    instance.assetGraph.findAssets({ type: "JavaScript" }),
+                    "not to be empty"
+                );
+            });
+        });
+
+        it("should include type Css", () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new ReLiveStyle({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            return expect(
+                () => instance.loadHtmlAssetAndPopulate(assetPath),
+                "to be fulfilled"
+            ).then(() => {
+                expect(
+                    instance.assetGraph.findAssets({ type: "Css" }),
+                    "not to be empty"
+                );
             });
         });
     });
