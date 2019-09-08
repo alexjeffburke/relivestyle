@@ -64,6 +64,10 @@ describe("Server", () => {
             const servePath = path.join(TEST_DATA, "example-project");
 
             const server = new Server({ servePath });
+            let resolveReady;
+            const openPromise = new Promise(
+                resolve => (resolveReady = resolve)
+            );
 
             return runBlockInServer(server, address => {
                 const client = new Promise((resolve, reject) => {
@@ -81,6 +85,8 @@ describe("Server", () => {
                                 args: { pathname: "/stuff.html" }
                             })
                         );
+
+                        resolveReady();
                     });
 
                     ws.on("error", e => {
@@ -98,7 +104,7 @@ describe("Server", () => {
                     });
                 });
 
-                return Promise.resolve().then(() => {
+                return openPromise.then(() => {
                     fs.writeFileSync(
                         filePath,
                         fileContent.replace("Hello", "Hello!"),
