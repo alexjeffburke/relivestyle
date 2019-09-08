@@ -2,6 +2,7 @@ const expect = require("unexpected");
 const path = require("path");
 
 const ReLiveStyle = require("../lib/ReLiveStyle");
+const Client = require("../lib/Client");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
 
@@ -114,13 +115,14 @@ describe("ReLiveStyle", () => {
 
             const assetPath = "/stuff.html";
             await instance.loadAsset(assetPath);
-            let sendArgs;
-            const fakeClient = {
-                send: (...args) => {
-                    sendArgs = args;
+            let onReloadCalled = false;
+            const fakeClient = new Client({
+                onReload: () => {
+                    onReloadCalled = true;
                 }
-            };
-            instance.addClient(fakeClient, assetPath);
+            });
+            fakeClient.clientState = "active";
+            instance.linkClient(fakeClient, assetPath);
 
             return expect(
                 () =>
@@ -129,7 +131,7 @@ describe("ReLiveStyle", () => {
                     ),
                 "to be fulfilled"
             ).then(() => {
-                expect(sendArgs, "to equal", ["reload"]);
+                expect(onReloadCalled, "to be true");
             });
         });
 
