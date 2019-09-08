@@ -163,5 +163,33 @@ describe("ReLiveStyle", () => {
 
             expect(sawResolution, "to be true");
         });
+
+        it("should notify the client of an unseen change if it is not yet active", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new ReLiveStyle({ servePath });
+
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            let onReloadCalled = false;
+            const fakeClient = new Client({
+                onReload: () => {
+                    onReloadCalled = true;
+                }
+            });
+            instance.addClient(fakeClient);
+
+            return expect(
+                () =>
+                    instance.notifyClientForFsPath(
+                        path.join(servePath, assetPath.slice(1))
+                    ),
+                "to be fulfilled"
+            ).then(() => {
+                expect(fakeClient.unseenChangesByAssetPath, "to equal", {
+                    [assetPath]: true
+                });
+                expect(onReloadCalled, "to be false");
+            });
+        });
     });
 });
