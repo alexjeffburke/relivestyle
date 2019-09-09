@@ -161,6 +161,30 @@ describe("ReLiveStyle", () => {
                 );
             });
         });
+
+        it("should work for nested scripts", () => {
+            const servePath = path.join(TEST_DATA, "example-module");
+            instance = new ReLiveStyle({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            return expect(
+                () => instance.loadHtmlAssetAndPopulate(assetPath),
+                "to be fulfilled"
+            ).then(() => {
+                const assets = instance.assetGraph.findAssets({
+                    type: "JavaScript"
+                });
+                expect(assets, "to satisfy", [
+                    {
+                        url: `file://${servePath}/stuff.js`
+                    },
+                    {
+                        url: `file://${servePath}/otherstuff.js`
+                    }
+                ]);
+            });
+        });
     });
 
     describe("#notifyClientForFsPath", () => {
