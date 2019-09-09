@@ -61,8 +61,6 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message to the client', () => {
-            const servePath = path.join(TEST_DATA, "example-project");
-
             const server = new Server({ servePath });
             let resolveReady;
             const openPromise = new Promise(
@@ -267,8 +265,6 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message to the client and behave correctly', async () => {
-            const servePath = path.join(TEST_DATA, "example-relations");
-
             const server = new Server({ servePath });
 
             return runBlockInServer(server, async address => {
@@ -310,7 +306,7 @@ describe("Server", () => {
         });
     });
 
-    describe("when any file changes and alwaysUpdateClients", () => {
+    describe("when alwaysUpdateClients", () => {
         const servePath = path.join(TEST_DATA, "example-project");
         const filePath = path.join(servePath, "other.txt");
         let fileContent;
@@ -323,7 +319,7 @@ describe("Server", () => {
             fs.writeFileSync(filePath, fileContent, "utf8");
         });
 
-        it('should send a "reload" message for a top level index file', () => {
+        it('should send a "reload" message when any file changes', () => {
             const server = new Server({ servePath, alwaysUpdateClients: true });
             let resolveReady;
             const openPromise = new Promise(
