@@ -144,6 +144,23 @@ describe("ReLiveStyle", () => {
                 );
             });
         });
+
+        it("should work for script of type module", () => {
+            const servePath = path.join(TEST_DATA, "example-module");
+            instance = new ReLiveStyle({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            return expect(
+                () => instance.loadHtmlAssetAndPopulate(assetPath),
+                "to be fulfilled"
+            ).then(() => {
+                expect(
+                    instance.assetGraph.findAssets({ type: "JavaScript" }),
+                    "not to be empty"
+                );
+            });
+        });
     });
 
     describe("#notifyClientForFsPath", () => {
