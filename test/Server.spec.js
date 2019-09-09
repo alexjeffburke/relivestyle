@@ -186,8 +186,8 @@ describe("Server", () => {
     });
 
     describe("when a related file changes", () => {
-        const servePath = path.join(TEST_DATA, "example-relations");
-        const filePath = path.join(servePath, "stuff.js");
+        const servePath = path.join(TEST_DATA, "example-module");
+        const filePath = path.join(servePath, "otherstuff.js");
         let fileContent;
 
         beforeEach(() => {
@@ -199,8 +199,6 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message to the client', () => {
-            const servePath = path.join(TEST_DATA, "example-relations");
-
             const server = new Server({ servePath });
             let resolveReady;
             const openPromise = new Promise(
@@ -253,8 +251,22 @@ describe("Server", () => {
                 });
             });
         });
+    });
 
-        it("should behave correctly even when registration takes some time", async () => {
+    describe("when registration takes some time", () => {
+        const servePath = path.join(TEST_DATA, "example-relations");
+        const filePath = path.join(servePath, "stuff.js");
+        let fileContent;
+
+        beforeEach(() => {
+            fileContent = fs.readFileSync(filePath, "utf8");
+        });
+
+        afterEach(() => {
+            fs.writeFileSync(filePath, fileContent, "utf8");
+        });
+
+        it('should send a "reload" message to the client and behave correctly', async () => {
             const servePath = path.join(TEST_DATA, "example-relations");
 
             const server = new Server({ servePath });
