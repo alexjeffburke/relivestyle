@@ -1,5 +1,6 @@
 const expect = require("unexpected");
 const path = require("path");
+const sinon = require("sinon");
 
 const PathMonitor = require("../lib/PathMonitor");
 const Client = require("../lib/Client");
@@ -248,6 +249,70 @@ describe("PathMonitor", () => {
                 ]);
             });
         });
+
+        describe("with a dirtied asset", () => {
+            it("should reload the asset", async () => {
+                const assetPath = "/stuff.html";
+                const servePath = path.join(TEST_DATA, "example-module");
+                instance = new PathMonitor({ servePath });
+                await instance.loadHtmlAssetAndPopulate(assetPath);
+                instance.loadedByAssetPath[assetPath].asset.text = "EEK";
+                instance.loadedByAssetPath[assetPath].dirty = true;
+
+                await instance.loadHtmlAssetAndPopulate(assetPath);
+
+                const { asset } = instance.loadedByAssetPath[assetPath];
+                expect(asset.text, "not to contain", "EEK");
+            });
+        });
+    });
+
+    describe("#getAsset", () => {
+        it("should return a loaded asset", async () => {
+            const assetPath = "/stuff.html";
+            const servePath = path.join(TEST_DATA, "example-project");
+            const diskPath = path.join(servePath, assetPath.slice(1));
+            instance = new PathMonitor({ servePath });
+            await instance.loadAsset(assetPath);
+            const [asset] = instance.assetGraph.findAssets({
+                url: `file://${diskPath}`
+            });
+
+            const record = instance.getAsset(assetPath);
+
+            expect(record, "to satisfy", {
+                asset: expect.it("to be", asset),
+                dirty: false
+            });
+        });
+
+        it("should return a dirtied asset", async () => {
+            const assetPath = "/stuff.html";
+            const servePath = path.join(TEST_DATA, "example-project");
+            instance = new PathMonitor({ servePath });
+            await instance.loadAsset(assetPath);
+            instance.loadedByAssetPath[assetPath].dirty = true;
+
+            const record = instance.getAsset(assetPath);
+
+            expect(record, "to be null");
+        });
+    });
+
+    describe("#dirtyAsset", () => {
+        it("should mark a loaded asset dirty", async () => {
+            const assetPath = "/stuff.html";
+            const servePath = path.join(TEST_DATA, "example-project");
+            instance = new PathMonitor({ servePath });
+            await instance.loadAsset(assetPath);
+
+            instance.dirtyAsset(assetPath);
+
+            const record = instance.loadedByAssetPath[assetPath];
+            expect(record, "to satisfy", {
+                dirty: true
+            });
+        });
     });
 
     describe("#notifyClientForFsPath", () => {
@@ -332,6 +397,21 @@ describe("PathMonitor", () => {
                 });
                 expect(onReloadCalled, "to be false");
             });
+        });
+
+        it("should mark the asset dirtied", async () => {
+            const assetPath = "/stuff.js";
+            const servePath = path.join(TEST_DATA, "example-relations");
+            const diskPath = path.join(servePath, assetPath.slice(1));
+            instance = new PathMonitor({ servePath });
+            sinon.stub(instance, "dirtyAsset");
+            await instance.loadAsset(assetPath);
+
+            await instance.notifyClientForFsPath(diskPath);
+
+            expect(instance.dirtyAsset.firstCall.args, "to satisfy", [
+                assetPath
+            ]);
         });
     });
 });

@@ -13,6 +13,7 @@ const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
 
 function createMockPathMonitor() {
     return {
+        getAsset: sinon.stub().named("getAsset"),
         loadHtmlAssetAndPopulate: sinon.stub().named("loadHtmlAssetAndPopulate")
     };
 }
@@ -108,6 +109,38 @@ describe("static middleware", function() {
                 },
                 response: {
                     statusCode: 404
+                }
+            });
+        });
+
+        it("should respond with a 304 on an ETag match", async function() {
+            pathMonitor.getAsset.returns({ hash: 123 });
+
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/stuff.html",
+                    headers: {
+                        "If-None-Match": '"123"'
+                    }
+                },
+                response: {
+                    statusCode: 304
+                }
+            });
+        });
+
+        it("should not respond with a 304 on a ETag mismatch", async function() {
+            pathMonitor.getAsset.returns({ hash: 456 });
+
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/stuff.html",
+                    headers: {
+                        "If-None-Match": '"123"'
+                    }
+                },
+                response: {
+                    statusCode: 200
                 }
             });
         });
