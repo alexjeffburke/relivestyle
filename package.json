@@ -13,7 +13,8 @@
   "scripts": {
     "coverage": "nyc --reporter lcov --reporter text npm test",
     "lint": "eslint . && prettier --check '**/*.js'",
-    "test": "mocha"
+    "test": "mocha",
+    "start": "./bin/relivestyle ./examples"
   },
   "author": "Alex J Burke <alex@alexjeffburke.com>",
   "repository": {
