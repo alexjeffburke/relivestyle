@@ -25,9 +25,17 @@ describe("PathMonitor", () => {
             return expect(
                 () => instance.loadAsset(assetPath),
                 "to be fulfilled"
-            ).then(() => {
-                expect(instance.loadedByAssetPath[assetPath], "to be true");
-            });
+            );
+        });
+
+        it("should persist the previously loaded asset", async () => {
+            const servePath = path.join(TEST_DATA, "example-project");
+            instance = new PathMonitor({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            const asset = await instance.loadAsset(assetPath);
+            expect(instance.loadedByAssetPath[assetPath], "to be", asset);
         });
 
         it("should register the promise while it is loading assets", () => {
@@ -44,17 +52,20 @@ describe("PathMonitor", () => {
             ).then(() => loadPromise);
         });
 
-        it("should immediately mark the asset as loading", () => {
+        it("should immediately record the asset as loading", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
             const loadPromise = instance.loadAsset(assetPath);
 
-            return expect(
-                instance.loadedByAssetPath[assetPath],
-                "to be true"
-            ).then(() => loadPromise);
+            const secondLoadPromise = instance.loadAsset(assetPath);
+
+            try {
+                expect(secondLoadPromise, "to equal", loadPromise);
+            } finally {
+                await loadPromise;
+            }
         });
 
         it("should not load the asset if it is already loaded", () => {

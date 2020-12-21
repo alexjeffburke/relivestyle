@@ -1,6 +1,6 @@
 module.exports = {
     parserOptions: {
-        ecmaVersion: 8
+        ecmaVersion: 2019
     },
     env: {
         mocha: true
