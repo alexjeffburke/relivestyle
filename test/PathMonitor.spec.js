@@ -1,14 +1,14 @@
 const expect = require("unexpected");
 const path = require("path");
 
-const ReLiveStyle = require("../lib/ReLiveStyle");
+const PathMonitor = require("../lib/PathMonitor");
 const Client = require("../lib/Client");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
 
 const waitImmediate = () => new Promise(resolve => setImmediate(resolve));
 
-describe("ReLiveStyle", () => {
+describe("PathMonitor", () => {
     let instance;
 
     afterEach(() => {
@@ -18,7 +18,7 @@ describe("ReLiveStyle", () => {
     describe("#loadAsset", () => {
         it("should load assets", () => {
             const servePath = path.join(TEST_DATA, "example-project");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
 
@@ -32,7 +32,7 @@ describe("ReLiveStyle", () => {
 
         it("should register the promise while it is loading assets", () => {
             const servePath = path.join(TEST_DATA, "example-project");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
             const loadPromise = instance.loadAsset(assetPath);
@@ -46,7 +46,7 @@ describe("ReLiveStyle", () => {
 
         it("should immediately mark the asset as loading", () => {
             const servePath = path.join(TEST_DATA, "example-project");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
             const loadPromise = instance.loadAsset(assetPath);
@@ -59,7 +59,7 @@ describe("ReLiveStyle", () => {
 
         it("should not load the asset if it is already loaded", () => {
             const servePath = path.join(TEST_DATA, "example-project");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
             instance.loadedByAssetPath[assetPath] = true;
@@ -73,7 +73,7 @@ describe("ReLiveStyle", () => {
 
         it("should ignore any assets if that do not exist", () => {
             const servePath = path.join(TEST_DATA, "example-project");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.ico";
             const loadPromise = instance.loadAsset(assetPath);
@@ -95,7 +95,7 @@ describe("ReLiveStyle", () => {
     describe("#loadHtmlAssetAndPopulate", () => {
         it("should populate assets", () => {
             const servePath = path.join(TEST_DATA, "example-relations");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
 
@@ -113,7 +113,7 @@ describe("ReLiveStyle", () => {
 
         it("should include type JavaScript", () => {
             const servePath = path.join(TEST_DATA, "example-relations");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
 
@@ -130,7 +130,7 @@ describe("ReLiveStyle", () => {
 
         it("should include type Css", () => {
             const servePath = path.join(TEST_DATA, "example-relations");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
 
@@ -147,7 +147,7 @@ describe("ReLiveStyle", () => {
 
         it("should work for script of type module", () => {
             const servePath = path.join(TEST_DATA, "example-module");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
 
@@ -164,7 +164,7 @@ describe("ReLiveStyle", () => {
 
         it("should work for nested scripts", () => {
             const servePath = path.join(TEST_DATA, "example-module");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
 
@@ -190,7 +190,7 @@ describe("ReLiveStyle", () => {
     describe("#notifyClientForFsPath", () => {
         it("should notify a client for a corresponding asset path", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
             await instance.loadAsset(assetPath);
@@ -216,7 +216,7 @@ describe("ReLiveStyle", () => {
 
         it("should wait for the resolution of any load promises", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
             await instance.loadAsset(assetPath);
@@ -245,7 +245,7 @@ describe("ReLiveStyle", () => {
 
         it("should notify the client of an unseen change if it is not yet active", async () => {
             const servePath = path.join(TEST_DATA, "example-relations");
-            instance = new ReLiveStyle({ servePath });
+            instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.js";
             await instance.loadAsset(assetPath);

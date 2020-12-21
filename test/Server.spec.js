@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const WebSocket = require("ws");
 
+const PathMonitor = require("../lib/PathMonitor");
 const Server = require("../lib/Server");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
@@ -30,7 +31,8 @@ describe("Server", () => {
     it("should allow a websocket connection", () => {
         const servePath = path.join(TEST_DATA, "example-project");
 
-        const server = new Server({ servePath });
+        const pathMonitor = new PathMonitor({ servePath });
+        const server = new Server({ pathMonitor, servePath });
 
         return runBlockInServer(server, address => {
             return new Promise((resolve, reject) => {
@@ -61,7 +63,8 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message to the client', () => {
-            const server = new Server({ servePath });
+            const pathMonitor = new PathMonitor({ servePath });
+            const server = new Server({ pathMonitor, servePath });
             let resolveReady;
             const openPromise = new Promise(
                 resolve => (resolveReady = resolve)
@@ -129,7 +132,8 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message for a top level index file', () => {
-            const server = new Server({ servePath });
+            const pathMonitor = new PathMonitor({ servePath });
+            const server = new Server({ pathMonitor, servePath });
             let resolveReady;
             const openPromise = new Promise(
                 resolve => (resolveReady = resolve)
@@ -197,7 +201,8 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message to the client', () => {
-            const server = new Server({ servePath });
+            const pathMonitor = new PathMonitor({ servePath });
+            const server = new Server({ pathMonitor, servePath });
             let resolveReady;
             const openPromise = new Promise(
                 resolve => (resolveReady = resolve)
@@ -265,7 +270,8 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message to the client and behave correctly', async () => {
-            const server = new Server({ servePath });
+            const pathMonitor = new PathMonitor({ servePath });
+            const server = new Server({ pathMonitor, servePath });
 
             return runBlockInServer(server, async address => {
                 fs.writeFileSync(
@@ -320,7 +326,11 @@ describe("Server", () => {
         });
 
         it('should send a "reload" message when any file changes', () => {
-            const server = new Server({ servePath, alwaysUpdateClients: true });
+            const pathMonitor = new PathMonitor({
+                servePath,
+                alwaysUpdateClients: true
+            });
+            const server = new Server({ pathMonitor, servePath });
             let resolveReady;
             const openPromise = new Promise(
                 resolve => (resolveReady = resolve)
