@@ -16,7 +16,19 @@ describe("PathMonitor", () => {
     });
 
     describe("#loadAsset", () => {
-        it("should load assets", () => {
+        it("should load assets (html)", () => {
+            const servePath = path.join(TEST_DATA, "example-project");
+            instance = new PathMonitor({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            return expect(
+                () => instance.loadAsset(assetPath),
+                "to be fulfilled"
+            );
+        });
+
+        it("should load assets (javascript)", () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
 
@@ -38,27 +50,12 @@ describe("PathMonitor", () => {
             expect(instance.loadedByAssetPath[assetPath], "to be", asset);
         });
 
-        it("should register the promise while it is loading assets", () => {
+        it("should deduplicate load requests", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
-
             const assetPath = "/stuff.html";
+
             const loadPromise = instance.loadAsset(assetPath);
-
-            return expect(
-                instance.promiseByAssetPath[assetPath],
-                "to equal",
-                loadPromise
-            ).then(() => loadPromise);
-        });
-
-        it("should immediately record the asset as loading", async () => {
-            const servePath = path.join(TEST_DATA, "example-project");
-            instance = new PathMonitor({ servePath });
-
-            const assetPath = "/stuff.html";
-            const loadPromise = instance.loadAsset(assetPath);
-
             const secondLoadPromise = instance.loadAsset(assetPath);
 
             try {
@@ -103,23 +100,78 @@ describe("PathMonitor", () => {
         });
     });
 
+    describe("#loadAssetOnly", () => {
+        it("should load assets", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+
+            const assetPath = "/stuff.js";
+
+            await instance.loadHtmlAssetAndPopulate(assetPath);
+            expect(instance.assetGraph._assets.size, "to equal", 1);
+        });
+
+        it("should register the promise while it is loading", () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+
+            const assetPath = "/stuff.js";
+
+            const loadPromise = instance.loadAssetOnly(assetPath);
+
+            return expect(
+                instance.promiseByAssetPath[assetPath],
+                "to equal",
+                loadPromise
+            ).then(() => loadPromise);
+        });
+    });
+
     describe("#loadHtmlAssetAndPopulate", () => {
-        it("should populate assets", () => {
+        it("should populate assets", async () => {
             const servePath = path.join(TEST_DATA, "example-relations");
             instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
 
+            await instance.loadHtmlAssetAndPopulate(assetPath);
+
+            expect(instance.assetGraph._assets.size, "to be greater than", 1);
+        });
+
+        it("should register the promise while it is populating", async () => {
+            const servePath = path.join(TEST_DATA, "example-project");
+            instance = new PathMonitor({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            const loadPromise = instance.loadHtmlAssetAndPopulate(assetPath);
+
             return expect(
-                () => instance.loadHtmlAssetAndPopulate(assetPath),
-                "to be fulfilled"
-            ).then(() => {
-                expect(
-                    instance.assetGraph._assets.size,
-                    "to be greater than",
-                    1
-                );
-            });
+                instance.promiseByAssetPath[assetPath],
+                "to equal",
+                loadPromise
+            ).then(() => loadPromise);
+        });
+
+        it("should deduplicate populate requests", async () => {
+            const servePath = path.join(TEST_DATA, "example-project");
+            instance = new PathMonitor({ servePath });
+
+            const assetPath = "/stuff.html";
+
+            const populatePromise = instance.loadHtmlAssetAndPopulate(
+                assetPath
+            );
+            const secondPopulatePromise = instance.loadHtmlAssetAndPopulate(
+                assetPath
+            );
+
+            try {
+                expect(secondPopulatePromise, "to equal", populatePromise);
+            } finally {
+                await populatePromise;
+            }
         });
 
         it("should include type JavaScript", () => {
