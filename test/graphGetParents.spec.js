@@ -59,9 +59,11 @@ describe("graphGetParents", () => {
                 }
             });
 
-            scriptAsset = (await graph.findAssets({
-                url: `file://${EXAMPLES_DIR}/nested.js`
-            }))[0];
+            scriptAsset = (
+                await graph.findAssets({
+                    url: `file://${EXAMPLES_DIR}/nested.js`
+                })
+            )[0];
         });
 
         it("should walk up multiple levels to an asset", async () => {
