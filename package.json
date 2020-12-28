@@ -44,6 +44,9 @@
     "mocha": "^6.2.0",
     "nyc": "^14.1.1",
     "prettier": "~1.19.1",
-    "unexpected": "^11.8.0"
+    "sinon": "^9.2.2",
+    "unexpected": "^11.8.0",
+    "unexpected-express": "^13.0.1",
+    "unexpected-snapshot": "^1.1.1"
   }
 }
