@@ -226,6 +226,16 @@ describe("PathMonitor", () => {
             });
         });
 
+        it("should ignore population failures", async () => {
+            const assetPath = "/stuff.html";
+            const servePath = path.join(TEST_DATA, "example-badmodule");
+            instance = new PathMonitor({ servePath });
+
+            const record = await instance.loadHtmlAssetAndPopulate(assetPath);
+
+            expect(record, "not to be null");
+        });
+
         it("should work for nested scripts", () => {
             const servePath = path.join(TEST_DATA, "example-module");
             instance = new PathMonitor({ servePath });
