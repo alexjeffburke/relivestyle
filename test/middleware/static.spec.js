@@ -113,6 +113,19 @@ describe("static middleware", function() {
             });
         });
 
+        it("should respond with a 404 if loading fails", async function() {
+            pathMonitor.loadHtmlAssetAndPopulate.resolves(null);
+
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/"
+                },
+                response: {
+                    statusCode: 404
+                }
+            });
+        });
+
         it("should respond with a 304 on an ETag match", async function() {
             pathMonitor.getAsset.returns({ hash: 123 });
 
