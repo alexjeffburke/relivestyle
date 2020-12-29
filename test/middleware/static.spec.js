@@ -19,6 +19,60 @@ function createMockPathMonitor() {
 }
 
 describe("static middleware", function() {
+    describe("when serving node_modules", function() {
+        let middleware;
+
+        beforeEach(function() {
+            const result = createMiddleware({
+                servePath: TEST_DATA_EXAMPLE_MODULE,
+                pathMonitor: {}
+            });
+            middleware = result.middleware;
+        });
+
+        it("should respond with a 200 and content-type of application/json", async function() {
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/__node_modules/unexpected"
+                },
+                response: {
+                    statusCode: 200,
+                    headers: {
+                        "Content-Type": "application/javascript; charset=utf-8"
+                    }
+                }
+            });
+        });
+
+        it("should respond for a path nested within a package", async function() {
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/__node_modules/sockette/dist/sockette.min.js"
+                },
+                response: {
+                    statusCode: 200,
+                    headers: {
+                        "Content-Type": "application/javascript; charset=utf-8"
+                    }
+                }
+            });
+        });
+
+        it("should respond for the local client code", async function() {
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/__node_modules/relivestyle/lib/frontend/client.js"
+                },
+                response: {
+                    statusCode: 200,
+                    headers: {
+                        "Content-Type": "application/javascript; charset=utf-8"
+                    }
+                }
+            });
+        });
+    });
+
     describe("when serving HTML", function() {
         const htmlPath = path.join(TEST_DATA_EXAMPLE_MODULE, "stuff.html");
         const htmlContent = fs.readFileSync(htmlPath, "utf8");
@@ -72,7 +126,7 @@ describe("static middleware", function() {
                           <head>
                             <meta charset="utf-8" />
                             <title>Foo</title>
-                          <script src="/__livestyle/sockette.js"></script><script src="/__livestyle/client.js"></script></head>
+                          <script src="/__node_modules/sockette/dist/sockette.min.js"></script><script src="/__node_modules/relivestyle/lib/frontend/client.js"></script></head>
                           <body>
                             <h1>Hello world</h1>
                             <script src="stuff.js" type="module"></script>
