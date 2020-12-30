@@ -34,6 +34,7 @@
     "yargs": "^14.0.0"
   },
   "devDependencies": {
+    "@depository/store": "^0.12.0",
     "eslint": "^7.16.0",
     "eslint-config-prettier": "^6.2.0",
     "eslint-config-standard": "^16.0.2",

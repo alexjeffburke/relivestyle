@@ -62,6 +62,20 @@ describe("static middleware", function() {
             });
         });
 
+        it("should respond for a nested path within a namespaced package", async function() {
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/__node_modules/@depository/store/dist/store.esm.js"
+                },
+                response: {
+                    statusCode: 200,
+                    headers: {
+                        "Content-Type": "application/javascript; charset=utf-8"
+                    }
+                }
+            });
+        });
+
         it("should respond for the local client code", async function() {
             await expect(middleware, "to yield exchange", {
                 request: {
