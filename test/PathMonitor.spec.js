@@ -1,4 +1,6 @@
-const expect = require("unexpected");
+const expect = require("unexpected")
+    .clone()
+    .use(require("unexpected-snapshot"));
 const path = require("path");
 const sinon = require("sinon");
 
@@ -273,6 +275,34 @@ describe("PathMonitor", () => {
 
                 const { asset } = instance.loadedByAssetPath[assetPath];
                 expect(asset.text, "not to contain", "EEK");
+            });
+        });
+    });
+
+    describe("#loadJsAssetAndPopulate", () => {
+        it("should rewrite node_modules imports", async () => {
+            const assetPath = "/stuff.js";
+            const servePath = path.join(TEST_DATA, "example-npm");
+            instance = new PathMonitor({ servePath });
+
+            const record = await instance.loadJsAssetAndPopulate(assetPath);
+
+            expect(record.asset, "to satisfy", {
+                text: expect.it(value =>
+                    expect(
+                        value,
+                        "to equal snapshot",
+                        expect.unindent`
+                        import {
+                            html,
+                            render
+                        } from '/__node_modules/htm/preact/index.js';
+                        render(html\`
+                                <h1>Hello World</h1>
+                            \`, document.getElementById('app-root'));
+                    `
+                    )
+                )
             });
         });
     });

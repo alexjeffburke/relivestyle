@@ -10,11 +10,15 @@ const createMiddleware = require("../../lib/middleware/static");
 
 const TEST_DATA = path.join(__dirname, "..", "..", "testdata");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
+const TEST_DATA_EXAMPLE_NPM = path.join(TEST_DATA, "example-npm");
 
 function createMockPathMonitor() {
     return {
         getAsset: sinon.stub().named("getAsset"),
-        loadHtmlAssetAndPopulate: sinon.stub().named("loadHtmlAssetAndPopulate")
+        loadHtmlAssetAndPopulate: sinon
+            .stub()
+            .named("loadHtmlAssetAndPopulate"),
+        loadJsAssetAndPopulate: sinon.stub().named("loadJsAssetAndPopulate")
     };
 }
 
@@ -208,6 +212,41 @@ describe("static middleware", function() {
                 },
                 response: {
                     statusCode: 200
+                }
+            });
+        });
+    });
+
+    describe("when serving JS", function() {
+        const jsPath = path.join(TEST_DATA_EXAMPLE_NPM, "stuff.js");
+        const jsContent = fs.readFileSync(jsPath, "utf8");
+        let pathMonitor;
+        let middleware;
+
+        beforeEach(function() {
+            pathMonitor = createMockPathMonitor();
+            pathMonitor.loadJsAssetAndPopulate.resolves({
+                asset: {
+                    text: jsContent
+                }
+            });
+            const result = createMiddleware({
+                servePath: TEST_DATA_EXAMPLE_MODULE,
+                pathMonitor
+            });
+            middleware = result.middleware;
+        });
+
+        it("should respond with a 200 and content-type of application/json", async function() {
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/stuff.js"
+                },
+                response: {
+                    statusCode: 200,
+                    headers: {
+                        "Content-Type": "application/javascript"
+                    }
                 }
             });
         });
