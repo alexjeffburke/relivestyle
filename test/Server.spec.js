@@ -256,6 +256,71 @@ describe("Server", () => {
         });
     });
 
+    describe("when a file is deleted", () => {
+        const servePath = path.join(TEST_DATA, "example-project");
+        const filePath = path.join(servePath, "stuff.html");
+        let fileContent;
+
+        beforeEach(() => {
+            fileContent = fs.readFileSync(filePath, "utf8");
+        });
+
+        afterEach(() => {
+            fs.writeFileSync(filePath, fileContent, "utf8");
+        });
+
+        it('should send a "reload" message to the client', () => {
+            const pathMonitor = new PathMonitor({ servePath });
+            const server = new Server({ pathMonitor, servePath });
+            let resolveReady;
+            const openPromise = new Promise(
+                resolve => (resolveReady = resolve)
+            );
+
+            return runBlockInServer(server, address => {
+                const client = new Promise((resolve, reject) => {
+                    const ws = new WebSocket(
+                        `ws://localhost:${address.port}/__livestyle`
+                    );
+                    const timeout = setTimeout(() => {
+                        reject(new Error("message not received"));
+                    }, TIMEOUT_FOR_MESSAGE);
+
+                    ws.on("open", () => {
+                        ws.send(
+                            JSON.stringify({
+                                type: "register",
+                                args: { pathname: "/stuff.html" }
+                            })
+                        );
+
+                        resolveReady();
+                    });
+
+                    ws.on("error", e => {
+                        clearTimeout(timeout);
+                        reject(e);
+                    });
+
+                    ws.on("message", msg => {
+                        if (msg === "reload") {
+                            clearTimeout(timeout);
+                            resolve();
+                        } else {
+                            reject(new Error("message was incorrect"));
+                        }
+                    });
+                });
+
+                return openPromise.then(() => {
+                    fs.unlinkSync(filePath);
+
+                    return client;
+                });
+            });
+        });
+    });
+
     describe("when registration takes some time", () => {
         const servePath = path.join(TEST_DATA, "example-relations");
         const filePath = path.join(servePath, "stuff.js");
