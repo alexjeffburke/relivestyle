@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "coverage": "nyc --reporter lcov --reporter text npm test",
-    "lint": "eslint . && prettier --check '**/*.js'",
+    "lint": "eslint . && prettier --check '**/*.{html,js}'",
     "test": "mocha",
     "start": "./bin/relivestyle ./examples"
   },
