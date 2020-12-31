@@ -355,31 +355,122 @@ describe("PathMonitor", () => {
         });
     });
 
+    describe("#addClient", () => {
+        it("should mark a client with any unseen changes", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            const assetPath = "/stuff.js";
+            instance.orphanByAssetPath[assetPath] = true;
+            const client = new Client({
+                onReload: () => {
+                    throw new Error("should not occur");
+                }
+            });
+
+            instance.addClient(client);
+
+            expect(
+                client.unseenChangesByAssetPath,
+                "to equal",
+                instance.orphanByAssetPath
+            ).and("not to be", instance.orphanByAssetPath);
+        });
+    });
+
+    describe("#linkClient", () => {
+        it("should notify the client of an unseen changes", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            sinon.spy(instance, "_linkClientHandleOrphans");
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            let onReloadCalled = false;
+            const client = new Client({
+                onReload: () => {
+                    onReloadCalled = true;
+                }
+            });
+            client.unseenChangesByAssetPath[assetPath] = true;
+
+            client.clientState = "active";
+            instance.linkClient(client, leafPath);
+
+            await instance._linkClientHandleOrphans.firstCall.returnValue;
+
+            expect(onReloadCalled, "to be true");
+        });
+
+        it("should clear any unseen changes", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            sinon.spy(instance, "_linkClientHandleOrphans");
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            const client = new Client({
+                onReload: () => {}
+            });
+            client.unseenChangesByAssetPath[assetPath] = true;
+
+            client.clientState = "active";
+            instance.linkClient(client, leafPath);
+
+            await instance._linkClientHandleOrphans.firstCall.returnValue;
+
+            expect(client.unseenChangesByAssetPath, "to equal", {});
+        });
+    });
+
     describe("#notifyClientForFsPath", () => {
-        it("should notify a client for a corresponding asset path", async () => {
+        it("should notify a client for a corresponding leaf asset", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
 
             const assetPath = "/stuff.html";
             await instance.loadAsset(assetPath);
             let onReloadCalled = false;
-            const fakeClient = new Client({
+            const client = new Client({
                 onReload: () => {
                     onReloadCalled = true;
                 }
             });
-            fakeClient.clientState = "active";
-            instance.linkClient(fakeClient, assetPath);
+            client.clientState = "active";
+            instance.linkClient(client, assetPath);
 
-            return expect(
-                () =>
-                    instance.notifyClientForFsPath(
-                        path.join(servePath, assetPath.slice(1))
-                    ),
-                "to be fulfilled"
-            ).then(() => {
-                expect(onReloadCalled, "to be true");
+            await instance.notifyClientForFsPath(
+                path.join(servePath, assetPath.slice(1))
+            );
+
+            expect(onReloadCalled, "to be true");
+        });
+
+        it("should notify a client for a corresponding related asset", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            let onReloadCalled = false;
+            const client = new Client({
+                pathMonitor: instance,
+                onReload: () => {
+                    onReloadCalled = true;
+                }
             });
+            instance.addClient(client);
+            client.clientState = "active";
+            instance.linkClient(client, leafPath);
+
+            await instance.notifyClientForFsPath(
+                path.join(servePath, assetPath.slice(1))
+            );
+
+            expect(onReloadCalled, "to be true");
         });
 
         it("should wait for the resolution of any load promises", async () => {
@@ -411,31 +502,55 @@ describe("PathMonitor", () => {
             expect(sawResolution, "to be true");
         });
 
-        it("should notify the client of an unseen change if it is not yet active", async () => {
+        it("should record an unseen change if the asset was never loaded", async () => {
             const servePath = path.join(TEST_DATA, "example-relations");
             instance = new PathMonitor({ servePath });
+            const assetPath = "/stuff.js";
 
+            await instance.notifyClientForFsPath(
+                path.join(servePath, assetPath.slice(1))
+            );
+
+            expect(instance.orphanByAssetPath, "to equal", {
+                [assetPath]: true
+            });
+        });
+
+        it("should record an unseen change if the asset was loaded", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
             const assetPath = "/stuff.js";
             await instance.loadAsset(assetPath);
-            let onReloadCalled = false;
-            const fakeClient = new Client({
+
+            await instance.notifyClientForFsPath(
+                path.join(servePath, assetPath.slice(1))
+            );
+
+            expect(instance.orphanByAssetPath, "to equal", {
+                [assetPath]: true
+            });
+        });
+
+        it("should record any changes on an unlinked client", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            const leafAsset = "/stuff.html";
+            await instance.loadAsset(leafAsset);
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            const client = new Client({
                 onReload: () => {
-                    onReloadCalled = true;
+                    throw new Error("should not occur");
                 }
             });
-            instance.addClient(fakeClient);
+            instance.addClient(client);
 
-            return expect(
-                () =>
-                    instance.notifyClientForFsPath(
-                        path.join(servePath, assetPath.slice(1))
-                    ),
-                "to be fulfilled"
-            ).then(() => {
-                expect(fakeClient.unseenChangesByAssetPath, "to equal", {
-                    [assetPath]: true
-                });
-                expect(onReloadCalled, "to be false");
+            await instance.notifyClientForFsPath(
+                path.join(servePath, assetPath.slice(1))
+            );
+
+            expect(client.unseenChangesByAssetPath, "to equal", {
+                [assetPath]: true
             });
         });
 
