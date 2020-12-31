@@ -569,4 +569,58 @@ describe("PathMonitor", () => {
             ]);
         });
     });
+
+    describe("#notifyClientForFsPathDelete", () => {
+        it("should remove the asset", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            const client = new Client({
+                pathMonitor: instance,
+                onReload: () => {}
+            });
+            instance.addClient(client);
+            client.clientState = "active";
+            instance.linkClient(client, leafPath);
+
+            await instance.notifyClientForFsPathDelete(
+                path.join(servePath, assetPath.slice(1))
+            );
+
+            const jsAssets = instance.assetGraph.findAssets({
+                type: "JavaScript"
+            });
+            expect(jsAssets, "to be empty");
+        });
+
+        it("should notify a linked client", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            let onReloadCalled = false;
+            const client = new Client({
+                pathMonitor: instance,
+                onReload: () => {
+                    onReloadCalled = true;
+                }
+            });
+            instance.addClient(client);
+            client.clientState = "active";
+            instance.linkClient(client, leafPath);
+
+            await instance.notifyClientForFsPathDelete(
+                path.join(servePath, assetPath.slice(1))
+            );
+
+            expect(onReloadCalled, "to be true");
+        });
+    });
 });
