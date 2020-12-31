@@ -568,6 +568,47 @@ describe("PathMonitor", () => {
                 assetPath
             ]);
         });
+
+        describe("with leafs pointing at related asset", () => {
+            it("should notify any corresponding client", async () => {
+                const servePath = path.join(TEST_DATA, "example-relations");
+                instance = new PathMonitor({ servePath });
+
+                const assetPath = "/stuff.js";
+                await instance.loadAsset(assetPath);
+                let client1Reloaded = false;
+                const client1 = new Client({
+                    pathMonitor: instance,
+                    onReload: () => {
+                        client1Reloaded = true;
+                    }
+                });
+                const leaf1Path = "/stuff.html";
+                await instance.loadAsset(leaf1Path);
+                instance.addClient(client1);
+                client1.clientState = "active";
+                instance.linkClient(client1, leaf1Path);
+                let client2Reloaded = false;
+                const client2 = new Client({
+                    pathMonitor: instance,
+                    onReload: () => {
+                        client2Reloaded = true;
+                    }
+                });
+                const leaf2Path = "/ztuff.html";
+                await instance.loadAsset(leaf2Path);
+                instance.addClient(client2);
+                client2.clientState = "active";
+                instance.linkClient(client2, leaf2Path);
+
+                await instance.notifyClientForFsPath(
+                    path.join(servePath, assetPath.slice(1))
+                );
+
+                expect(client1Reloaded, "to be true");
+                expect(client2Reloaded, "to be true");
+            });
+        });
     });
 
     describe("#notifyClientForFsPathDelete", () => {
