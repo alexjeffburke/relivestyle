@@ -134,26 +134,7 @@ describe("static middleware", function() {
                     url: "/stuff.html"
                 },
                 response: {
-                    body: expect.it(value =>
-                        expect(
-                            value,
-                            "to equal snapshot",
-                            expect.unindent`
-                        <!DOCTYPE html>
-                        <html>
-                          <head>
-                            <meta charset="utf-8" />
-                            <title>Foo</title>
-                          <script src="/__node_modules/sockette/dist/sockette.min.js"></script><script src="/__node_modules/relivestyle/lib/frontend/client.js"></script></head>
-                          <body>
-                            <h1>Hello world</h1>
-                            <script src="stuff.js" type="module"></script>
-                          </body>
-                        </html>
-
-                    `
-                        )
-                    )
+                    body: expect.it("to contain", "/__node_modules/")
                 }
             });
         });
