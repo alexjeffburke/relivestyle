@@ -297,7 +297,7 @@ describe("PathMonitor", () => {
                         import {
                             html,
                             render
-                        } from '/__node_modules/htm/preact/index.js';
+                        } from '/__node_modules/htm/preact/index.module.js';
                         render(html\`
                                 <h1>Hello World</h1>
                             \`, document.getElementById('app-root'));
