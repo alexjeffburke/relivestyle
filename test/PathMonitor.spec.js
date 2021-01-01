@@ -1,6 +1,7 @@
 const expect = require("unexpected")
     .clone()
     .use(require("unexpected-snapshot"));
+const fs = require("fs");
 const path = require("path");
 const sinon = require("sinon");
 
@@ -303,6 +304,35 @@ describe("PathMonitor", () => {
                     `
                     )
                 )
+            });
+        });
+
+        it("should pass through relative imports", async () => {
+            const assetPath = "/stuff.js";
+            const servePath = path.join(TEST_DATA, "example-module");
+            const diskPath = path.join(servePath, assetPath.slice(1));
+            instance = new PathMonitor({ servePath });
+
+            const record = await instance.loadJsAssetAndPopulate(assetPath);
+
+            expect(record.asset, "to satisfy", {
+                text: fs.readFileSync(diskPath, "utf8")
+            });
+        });
+
+        describe("with a dirtied asset", () => {
+            it("should reload the asset", async () => {
+                const assetPath = "/stuff.js";
+                const servePath = path.join(TEST_DATA, "example-module");
+                instance = new PathMonitor({ servePath });
+                await instance.loadJsAssetAndPopulate(assetPath);
+                instance.loadedByAssetPath[assetPath].asset.text = "EEK";
+                instance.loadedByAssetPath[assetPath].dirty = true;
+
+                await instance.loadJsAssetAndPopulate(assetPath);
+
+                const { asset } = instance.loadedByAssetPath[assetPath];
+                expect(asset.text, "not to contain", "EEK");
             });
         });
     });
