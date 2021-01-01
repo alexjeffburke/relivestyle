@@ -663,5 +663,64 @@ describe("PathMonitor", () => {
 
             expect(onReloadCalled, "to be true");
         });
+
+        it("should ignore an orphaned related asset", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            sinon.spy(instance, "informClients");
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            await instance.loadAsset("/stuff.js");
+            await instance.loadAsset("/other.js");
+
+            const client = new Client({
+                pathMonitor: instance,
+                onReload: () => {
+                    throw new Error("should not occur");
+                }
+            });
+            instance.addClient(client);
+            client.clientState = "active";
+            instance.linkClient(client, leafPath);
+
+            await instance.notifyClientForFsPathDelete(
+                path.join(servePath, "other.js")
+            );
+
+            expect(instance.informClients.getCalls(), "to be empty");
+        });
+
+        describe("when alwaysUpdateClients", () => {
+            it("should send reload messages to every client", async () => {
+                const servePath = path.join(TEST_DATA, "example-relations");
+                instance = new PathMonitor({
+                    servePath,
+                    alwaysUpdateClients: true
+                });
+
+                const leafPath = "/stuff.html";
+                await instance.loadAsset(leafPath);
+                await instance.loadAsset("/stuff.js");
+                await instance.loadAsset("/other.html");
+                await instance.loadAsset("/other.js");
+
+                let onReloadCalled = false;
+                const client = new Client({
+                    pathMonitor: instance,
+                    onReload: () => {
+                        onReloadCalled = true;
+                    }
+                });
+                instance.addClient(client);
+                client.clientState = "active";
+                instance.linkClient(client, leafPath);
+
+                await instance.notifyClientForFsPathDelete(
+                    path.join(servePath, "other.js")
+                );
+
+                expect(onReloadCalled, "to be true");
+            });
+        });
     });
 });
