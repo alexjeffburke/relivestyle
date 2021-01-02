@@ -76,6 +76,17 @@ describe("static middleware", function() {
             });
         });
 
+        it("should respond with rewritten paths", async function() {
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/__node_modules/htm/preact/index.module.js"
+                },
+                response: {
+                    body: expect.it("to contain", "/__node_modules/")
+                }
+            });
+        });
+
         it("should respond for the local client code", async function() {
             await expect(middleware, "to yield exchange", {
                 request: {
