@@ -166,6 +166,22 @@ describe("static middleware", function() {
             });
         });
 
+        it("should respond with the html on a request without extension", async function() {
+            const { middleware } = createMiddleware({
+                servePath: path.join(TEST_DATA, "example-project"),
+                pathMonitor
+            });
+
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/stuff"
+                },
+                response: {
+                    statusCode: 200
+                }
+            });
+        });
+
         it("should respond with a 404 if the file does not exist", async function() {
             await expect(middleware, "to yield exchange", {
                 request: {
