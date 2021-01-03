@@ -198,7 +198,7 @@ describe("static middleware", function() {
 
             await expect(middleware, "to yield exchange", {
                 request: {
-                    url: "/"
+                    url: "/xxx.html"
                 },
                 response: {
                     statusCode: 404
@@ -269,6 +269,19 @@ describe("static middleware", function() {
                     headers: {
                         "Content-Type": "application/javascript"
                     }
+                }
+            });
+        });
+
+        it("should respond with a 404 if loading fails", async function() {
+            pathMonitor.loadJsAssetAndPopulate.resolves(null);
+
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/xxx.js"
+                },
+                response: {
+                    statusCode: 404
                 }
             });
         });
