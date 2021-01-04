@@ -263,6 +263,16 @@ describe("PathMonitor", () => {
             });
         });
 
+        it("should ignore node resolution that returns a non-HTML asset", async () => {
+            const assetPath = "/stuff.html";
+            const servePath = path.join(TEST_DATA, "example-badresolve");
+            instance = new PathMonitor({ servePath });
+
+            const record = await instance.loadHtmlAssetAndPopulate(assetPath);
+
+            expect(record, "to be null");
+        });
+
         describe("with a dirtied asset", () => {
             it("should reload the asset", async () => {
                 const assetPath = "/stuff.html";
