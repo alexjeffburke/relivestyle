@@ -418,6 +418,26 @@ describe("PathMonitor", () => {
     });
 
     describe("#linkClient", () => {
+        it("should normalise any recorded client path", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            sinon.spy(instance, "_linkClientHandleOrphans");
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            const assetPath = "/stuff.js";
+            await instance.loadAsset(assetPath);
+            const client = new Client({});
+
+            client.clientState = "active";
+            instance.linkClient(client, "/stuff");
+
+            expect(
+                instance.clientAssets.get(client),
+                "to equal",
+                "/stuff.html"
+            );
+        });
+
         it("should notify the client of an unseen changes", async () => {
             const servePath = path.join(TEST_DATA, "example-relations");
             instance = new PathMonitor({ servePath });
