@@ -20,28 +20,28 @@ describe("PathMonitor", () => {
     });
 
     describe("#loadAsset", () => {
-        it("should load assets (html)", () => {
+        it("should load assets (html)", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
-
+            sinon.spy(instance, "loadHtmlAssetAndPopulate");
             const assetPath = "/stuff.html";
 
-            return expect(
-                () => instance.loadAsset(assetPath),
-                "to be fulfilled"
-            );
+            const loadPromise = instance.loadAsset(assetPath);
+
+            await expect(loadPromise, "to be fulfilled");
+            expect(instance.loadHtmlAssetAndPopulate.calledOnce, "to be true");
         });
 
-        it("should load assets (javascript)", () => {
+        it("should load assets (javascript)", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
+            sinon.spy(instance, "loadJsAssetAndPopulate");
+            const assetPath = "/stuff.js";
 
-            const assetPath = "/stuff.html";
+            const loadPromise = instance.loadAsset(assetPath);
 
-            return expect(
-                () => instance.loadAsset(assetPath),
-                "to be fulfilled"
-            );
+            await expect(loadPromise, "to be fulfilled");
+            expect(instance.loadJsAssetAndPopulate.calledOnce, "to be true");
         });
 
         it("should persist the previously loaded asset", async () => {
