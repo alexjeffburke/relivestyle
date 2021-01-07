@@ -629,6 +629,32 @@ describe("PathMonitor", () => {
             ]);
         });
 
+        it("should ignore an orphaned related asset", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            sinon.spy(instance, "informClients");
+            const leafPath = "/stuff.html";
+            await instance.loadAsset(leafPath);
+            await instance.loadAsset("/stuff.js");
+            await instance.loadAsset("/other.js");
+
+            const client = new Client({
+                pathMonitor: instance,
+                onReload: () => {
+                    throw new Error("should not occur");
+                }
+            });
+            instance.addClient(client);
+            client.clientState = "active";
+            instance.linkClient(client, leafPath);
+
+            await instance.notifyClientForFsPath(
+                path.join(servePath, "other.js")
+            );
+
+            expect(instance.informClients.getCalls(), "to be empty");
+        });
+
         describe("with leafs pointing at related asset", () => {
             it("should notify any corresponding client", async () => {
                 const servePath = path.join(TEST_DATA, "example-relations");
