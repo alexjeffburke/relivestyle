@@ -69,6 +69,23 @@ describe("PathMonitor", () => {
             }
         });
 
+        it("should load any dirtied asset requests", async () => {
+            const servePath = path.join(TEST_DATA, "example-relations");
+            instance = new PathMonitor({ servePath });
+            sinon.spy(instance, "loadAssetOnly");
+            const assetPath = "/stuff.css";
+            instance.loadedByAssetPath[assetPath] = {
+                asset: (await instance.assetGraph.loadAssets(assetPath))[0],
+                dirty: true
+            };
+
+            const record = await instance.loadAsset(assetPath);
+
+            expect(instance.loadAssetOnly.calledOnce, "to be true");
+            // check the cache record was not re-created
+            expect(instance.loadedByAssetPath[assetPath], "to be", record);
+        });
+
         it("should not load the asset if it is already loaded", () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
