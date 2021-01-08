@@ -125,8 +125,7 @@ describe("PathMonitor", () => {
         it("should load assets", async () => {
             const servePath = path.join(TEST_DATA, "example-relations");
             instance = new PathMonitor({ servePath });
-
-            const assetPath = "/stuff.js";
+            const assetPath = "/stuff.css";
 
             await instance.loadHtmlAssetAndPopulate(assetPath);
             expect(instance.assetGraph._assets.size, "to equal", 1);
@@ -135,8 +134,7 @@ describe("PathMonitor", () => {
         it("should register the promise while it is loading", () => {
             const servePath = path.join(TEST_DATA, "example-relations");
             instance = new PathMonitor({ servePath });
-
-            const assetPath = "/stuff.js";
+            const assetPath = "/stuff.css";
 
             const loadPromise = instance.loadAssetOnly(assetPath);
 
@@ -145,6 +143,22 @@ describe("PathMonitor", () => {
                 "to equal",
                 loadPromise
             ).then(() => loadPromise);
+        });
+
+        describe("with a dirtied asset", () => {
+            it("should reload the asset", async () => {
+                const assetPath = "/stuff.css";
+                const servePath = path.join(TEST_DATA, "example-relations");
+                instance = new PathMonitor({ servePath });
+                await instance.loadAssetOnly(assetPath);
+                instance.loadedByAssetPath[assetPath].asset.text = "EEK";
+                instance.loadedByAssetPath[assetPath].dirty = true;
+
+                await instance.loadAssetOnly(assetPath);
+
+                const { asset } = instance.loadedByAssetPath[assetPath];
+                expect(asset.text, "not to contain", "EEK");
+            });
         });
     });
 
