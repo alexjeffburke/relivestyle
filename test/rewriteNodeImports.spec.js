@@ -65,4 +65,20 @@ describe("rewriteNodeImports", () => {
             `
         );
     });
+
+    it("should ignore absolute url imports", async () => {
+        const input =
+            'import bits from "htm/preact";\nimport standalone from "https://unpkg.com/htm/preact/standalone.module.js";';
+
+        const output = await rewriteNodeImports(input, ROOT_DIR);
+
+        expect(
+            output,
+            "to equal snapshot",
+            expect.unindent`
+            import bits from "/__node_modules/htm/preact/index.module.js";
+            import standalone from "https://unpkg.com/htm/preact/standalone.module.js";
+            `
+        );
+    });
 });
