@@ -15,10 +15,7 @@ const TEST_DATA_EXAMPLE_NPM = path.join(TEST_DATA, "example-npm");
 function createMockPathMonitor() {
     return {
         getAsset: sinon.stub().named("getAsset"),
-        loadHtmlAssetAndPopulate: sinon
-            .stub()
-            .named("loadHtmlAssetAndPopulate"),
-        loadJsAssetAndPopulate: sinon.stub().named("loadJsAssetAndPopulate")
+        loadAsset: sinon.stub().named("loadAsset")
     };
 }
 
@@ -110,7 +107,7 @@ describe("static middleware", function() {
 
         beforeEach(function() {
             pathMonitor = createMockPathMonitor();
-            pathMonitor.loadHtmlAssetAndPopulate.resolves({
+            pathMonitor.loadAsset.resolves({
                 asset: {
                     text: htmlContent
                 },
@@ -194,7 +191,7 @@ describe("static middleware", function() {
         });
 
         it("should respond with a 404 if loading fails", async function() {
-            pathMonitor.loadHtmlAssetAndPopulate.resolves(null);
+            pathMonitor.loadAsset.resolves(null);
 
             await expect(middleware, "to yield exchange", {
                 request: {
@@ -247,7 +244,7 @@ describe("static middleware", function() {
 
         beforeEach(function() {
             pathMonitor = createMockPathMonitor();
-            pathMonitor.loadJsAssetAndPopulate.resolves({
+            pathMonitor.loadAsset.resolves({
                 asset: {
                     text: jsContent
                 }
@@ -274,7 +271,7 @@ describe("static middleware", function() {
         });
 
         it("should respond with a 404 if loading fails", async function() {
-            pathMonitor.loadJsAssetAndPopulate.resolves(null);
+            pathMonitor.loadAsset.resolves(null);
 
             await expect(middleware, "to yield exchange", {
                 request: {
