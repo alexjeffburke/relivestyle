@@ -807,6 +807,29 @@ describe("PathMonitor", () => {
 
                 expect(onReloadCalled, "to be true");
             });
+
+            it("should remove the asset", async () => {
+                const servePath = path.join(TEST_DATA, "example-relations");
+                instance = new PathMonitor({ servePath });
+                sinon.spy(instance, "deleteAsset");
+                const leafPath = "/stuff.html";
+                await instance.loadAsset(leafPath);
+                const assetPath = "/stuff.js";
+                await instance.loadAsset(assetPath);
+                const client = new Client({
+                    pathMonitor: instance,
+                    onReload: () => {}
+                });
+                instance.addClient(client);
+                client.clientState = "active";
+                instance.linkClient(client, leafPath);
+
+                await instance.notifyClientForFsPathDelete(
+                    path.join(servePath, assetPath.slice(1))
+                );
+
+                expect(instance.deleteAsset.calledOnce, "to be true");
+            });
         });
     });
 });
