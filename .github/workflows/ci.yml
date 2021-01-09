@@ -1,5 +1,5 @@
 name: tests
-'on':
+"on":
   push:
   pull_request:
 
@@ -10,9 +10,8 @@ jobs:
     strategy:
       matrix:
         node:
-          - '10'
-          - '12'
-          - '14'
+          - "12"
+          - "14"
     steps:
       - uses: actions/checkout@v2
       - name: Setup node
@@ -28,16 +27,16 @@ jobs:
     strategy:
       matrix:
         targets:
-          - name: 'Lint'
-            target: 'lint'
-          - name: 'Coverage'
-            target: 'coverage'
+          - name: "Lint"
+            target: "lint"
+          - name: "Coverage"
+            target: "coverage"
     steps:
       - uses: actions/checkout@v2
       - name: Setup node
         uses: actions/setup-node@v1
         with:
-          node-version: '10'
+          node-version: "12"
       - run: npm install
       - run: npm run ${{ matrix.targets.target }}
       - name: Upload coverage
