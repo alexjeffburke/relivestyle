@@ -173,6 +173,19 @@ describe("PathMonitor", () => {
                 const { asset } = instance.loadedByAssetPath[assetPath];
                 expect(asset.text, "not to contain", "EEK");
             });
+
+            it("should clear the dirty flag", async () => {
+                const assetPath = "/stuff.css";
+                const servePath = path.join(TEST_DATA, "example-relations");
+                instance = new PathMonitor({ servePath });
+                await instance.loadAssetOnly(assetPath);
+                instance.loadedByAssetPath[assetPath].asset.text = "EEK";
+                instance.loadedByAssetPath[assetPath].dirty = true;
+
+                const record = await instance.loadAssetOnly(assetPath);
+
+                expect(record.dirty, "to be false");
+            });
         });
     });
 
