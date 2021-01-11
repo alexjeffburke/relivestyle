@@ -44,7 +44,7 @@ describe("PathMonitor", () => {
             expect(instance.loadJsAssetAndPopulate.calledOnce, "to be true");
         });
 
-        it("should persist the previously loaded asset", async () => {
+        it("should persist the loaded asset", async () => {
             const servePath = path.join(TEST_DATA, "example-project");
             instance = new PathMonitor({ servePath });
 
@@ -118,6 +118,20 @@ describe("PathMonitor", () => {
                         "to be undefined"
                     );
                 });
+        });
+
+        describe("with a previously loaded asset", () => {
+            it("should return promises from subsequent calls", async () => {
+                const servePath = path.join(TEST_DATA, "example-project");
+                instance = new PathMonitor({ servePath });
+                const assetPath = "/stuff.html";
+                const record = await instance.loadAsset(assetPath);
+
+                const maybePromise = instance.loadAsset(assetPath);
+
+                expect(maybePromise, "to be a", "Promise");
+                expect(await maybePromise, "to equal", record);
+            });
         });
     });
 
