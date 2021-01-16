@@ -11,6 +11,7 @@ const createMiddleware = require("../../lib/middleware/static");
 const TEST_DATA = path.join(__dirname, "..", "..", "testdata");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
 const TEST_DATA_EXAMPLE_NPM = path.join(TEST_DATA, "example-npm");
+const TEST_DATA_EXAMPLE_RELATIONS = path.join(TEST_DATA, "example-relations");
 
 function createMockPathMonitor() {
     return {
@@ -279,6 +280,41 @@ describe("static middleware", function() {
                 },
                 response: {
                     statusCode: 404
+                }
+            });
+        });
+    });
+
+    describe("when serving CSS", function() {
+        const filePath = path.join(TEST_DATA_EXAMPLE_RELATIONS, "stuff.css");
+        const fileContent = fs.readFileSync(filePath, "utf8");
+        let pathMonitor;
+        let middleware;
+
+        beforeEach(function() {
+            pathMonitor = createMockPathMonitor();
+            pathMonitor.loadAsset.resolves({
+                asset: {
+                    text: fileContent
+                }
+            });
+            const result = createMiddleware({
+                servePath: TEST_DATA_EXAMPLE_RELATIONS,
+                pathMonitor
+            });
+            middleware = result.middleware;
+        });
+
+        it("should respond with a 200 and content-type of application/json", async function() {
+            await expect(middleware, "to yield exchange", {
+                request: {
+                    url: "/stuff.css"
+                },
+                response: {
+                    statusCode: 200,
+                    headers: {
+                        "Content-Type": "text/css"
+                    }
                 }
             });
         });
