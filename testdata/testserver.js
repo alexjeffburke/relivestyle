@@ -12,7 +12,7 @@ const path = require("path");
 const Server = require("../lib/Server");
 
 const server = new Server({
-    servePath: path.join(__dirname, "example-project")
+  servePath: path.join(__dirname, "example-project")
 });
 
 server.listen(7000);
