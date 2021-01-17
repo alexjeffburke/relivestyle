@@ -6,9 +6,9 @@ const fs = require("fs");
 const path = require("path");
 const sinon = require("sinon");
 
-const createMiddleware = require("../../lib/middleware/static");
+const createMiddleware = require("../lib/assetMiddleware");
 
-const TEST_DATA = path.join(__dirname, "..", "..", "testdata");
+const TEST_DATA = path.join(__dirname, "..", "testdata");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
 const TEST_DATA_EXAMPLE_NPM = path.join(TEST_DATA, "example-npm");
 const TEST_DATA_EXAMPLE_RELATIONS = path.join(TEST_DATA, "example-relations");
@@ -20,7 +20,7 @@ function createMockPathMonitor() {
     };
 }
 
-describe("static middleware", function() {
+describe("asset middleware", function() {
     describe("when serving node_modules", function() {
         let middleware;
 
