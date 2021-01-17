@@ -1,7 +1,6 @@
 # Relivestyle
 
-Relivestyle is a small web server that refreshes pages served
-by it when they, or any assets they link to, change on disk.
+Relivestyle is an independent dev server for the modern web.
 
 [![NPM version](https://img.shields.io/npm/v/relivestyle.svg)](https://www.npmjs.com/package/relivestyle)
 [![Build Status](https://github.com/alexjeffburke/relivestyle/workflows/tests/badge.svg)](https://github.com/alexjeffburke/relivestyle)
@@ -9,19 +8,24 @@ by it when they, or any assets they link to, change on disk.
 
 ## Introduction
 
+Relivestyle is built to efficiently serve a static folder containing the
+HTML, JavaScript and CSS files that comprise a modern web application.
+
+The server watches the pages and related assets that make up your small
+project and instantly reloads any browser that accessed them whenever
+changes to the on-disk files are detected.
+
+## Background
+
 Modern JavaScript tooling is extremely powerful but often represents a
 rather steep curve not just in terms of learning but also implementation.
 
-These tools and the setup work they require are often necessary for fully
-formed projects - but present a barrier when wishing to experiment within
-the browser. This project aims to support this use-case.
+Meanwhile, the capabilities made available within modern broswsers make
+it possible to build modular applications without requiring on such tools.
+Relivestyle is a dev server with minimal dependencies and no configuration
+which enables reload-on-change style development for such applications.
 
-Relivestyle watches the pages and related assets that make up your small
-project and instantly reloads any browser that loaded them whenever any
-changes are detected. This is not a totally new idea, and if it sounds
-familiar then please let us make a huge nod to
-[livestyle](https://github.com/One-com/livestyle))
-that heavily inspired this effort.
+This project aims to support this use-case.
 
 ## Use
 
@@ -46,15 +50,29 @@ npx relivestyle --port 5000 /path/to/static/folder
 
 ## Philosophy
 
-As mentioned this project is heavily inspired by Livestyle but there are
-a number of radical differences that coalesce in a completely new codebase:
+We believe that mandating the use of particular tools in order to assemble
+a fully functional application is unecessary with the advent of ES Modules.
+
+The project provides the ability to quickly iterate on browser first software.
+Tools such as bundlers, transpilers etc are often necessary for fully formed
+porjects - particularly for optimised bundles - but present a barrier when
+wishing to experiment within the browser and have a tendency of becoming
+mandatory should the software work at all.
+
+We believe that the use of any particular tools should be a progressive addition
+and that modern web projects can be fully fucntional and capable without them.
+
+All this leads to some rather different choices and trade-offs being made:
 
 ### Server-side asset tracking
 
+In order support its use without modifying projects, the server records information
+about the static assets dynamically and uses this to
+
 The server leverages the excellent [AssetGraph](https://github.com/assetgraph/assetgraph)
-project to track clients and the assets they use. As the client loads pages we
-build out the graph-based representation of the what is being loaded and use it
-to inform a client that it must reload when there was a relevant change.
+project to track assets they are made use of. As clients loads pages we
+build out the graph-based representation of the what is being loaded and
+inform clients that they must reload when there was a relevant change.
 
 ### Strictly avoid asset generation
 
@@ -69,6 +87,15 @@ syntax. If you later decide that you require transpilation for syntax that
 is not yet standardised or for use in older browsers, you can simply have
 the output written into the directory served out be Relivestyle and your
 workflow does not need to change. If the files change, we simply reload.
+
+## Credits
+
+Relivestyle watches the pages and related assets that make up your small
+project and instantly reloads any browser that loaded them whenever any
+changes are detected. This is not a totally new idea, and if it sounds
+familiar then please let us make a huge nod to
+[livestyle](https://github.com/One-com/livestyle))
+that inspired this effort.
 
 ## License
 
