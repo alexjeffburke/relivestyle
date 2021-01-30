@@ -5,8 +5,9 @@ const fs = require("fs");
 const path = require("path");
 const sinon = require("sinon");
 
-const PathMonitor = require("../lib/PathMonitor");
 const Client = require("../lib/Client");
+const ImportResolver = require("../lib/ImportResolver");
+const PathMonitor = require("../lib/PathMonitor");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
 
@@ -344,7 +345,8 @@ describe("PathMonitor", () => {
     it("should rewrite node_modules imports", async () => {
       const assetPath = "/stuff.js";
       const servePath = path.join(TEST_DATA, "example-npm");
-      instance = new PathMonitor({ servePath });
+      const importResolver = new ImportResolver({ servePath });
+      instance = new PathMonitor({ importResolver, servePath });
 
       const { asset } = await instance.loadJsAssetAndPopulate(assetPath);
 
@@ -367,7 +369,8 @@ describe("PathMonitor", () => {
       const assetPath = "/stuff.js";
       const servePath = path.join(TEST_DATA, "example-module");
       const diskPath = path.join(servePath, assetPath.slice(1));
-      instance = new PathMonitor({ servePath });
+      const importResolver = new ImportResolver({ servePath });
+      instance = new PathMonitor({ importResolver, servePath });
 
       const record = await instance.loadJsAssetAndPopulate(assetPath);
 
@@ -380,7 +383,8 @@ describe("PathMonitor", () => {
       it("should reload the asset", async () => {
         const assetPath = "/stuff.js";
         const servePath = path.join(TEST_DATA, "example-module");
-        instance = new PathMonitor({ servePath });
+        const importResolver = new ImportResolver({ servePath });
+        instance = new PathMonitor({ importResolver, servePath });
         await instance.loadJsAssetAndPopulate(assetPath);
         instance.loadedByAssetPath[assetPath].asset.text = "EEK";
         instance.loadedByAssetPath[assetPath].dirty = true;
@@ -738,11 +742,12 @@ describe("PathMonitor", () => {
   describe("#notifyClientForFsPathDelete", () => {
     it("should remove the asset", async () => {
       const servePath = path.join(TEST_DATA, "example-relations");
-      instance = new PathMonitor({ servePath });
+      const importResolver = new ImportResolver({ servePath });
+      instance = new PathMonitor({ importResolver, servePath });
 
       const leafPath = "/stuff.html";
       await instance.loadAsset(leafPath);
-      const assetPath = "/stuff.js";
+      const assetPath = "/stuff.css";
       await instance.loadAsset(assetPath);
       const client = new Client({
         pathMonitor: instance,
@@ -756,10 +761,10 @@ describe("PathMonitor", () => {
         path.join(servePath, assetPath.slice(1))
       );
 
-      const jsAssets = instance.assetGraph.findAssets({
-        type: "JavaScript"
+      const cssAssets = instance.assetGraph.findAssets({
+        type: "Css"
       });
-      expect(jsAssets, "to be empty");
+      expect(cssAssets, "to be empty");
     });
 
     it("should notify a linked client", async () => {
@@ -769,7 +774,6 @@ describe("PathMonitor", () => {
       const leafPath = "/stuff.html";
       await instance.loadAsset(leafPath);
       const assetPath = "/stuff.js";
-      await instance.loadAsset(assetPath);
       let onReloadCalled = false;
       const client = new Client({
         pathMonitor: instance,
@@ -790,7 +794,8 @@ describe("PathMonitor", () => {
 
     it("should ignore an orphaned related asset", async () => {
       const servePath = path.join(TEST_DATA, "example-relations");
-      instance = new PathMonitor({ servePath });
+      const importResolver = new ImportResolver({ servePath });
+      instance = new PathMonitor({ importResolver, servePath });
       sinon.spy(instance, "informClients");
       const leafPath = "/stuff.html";
       await instance.loadAsset(leafPath);
@@ -817,7 +822,9 @@ describe("PathMonitor", () => {
     describe("when alwaysUpdateClients", () => {
       it("should send reload messages to every client", async () => {
         const servePath = path.join(TEST_DATA, "example-relations");
+        const importResolver = new ImportResolver({ servePath });
         instance = new PathMonitor({
+          importResolver,
           servePath,
           alwaysUpdateClients: true
         });

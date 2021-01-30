@@ -3,10 +3,12 @@ const expect = require("unexpected")
   .use(require("unexpected-express"))
   .use(require("unexpected-snapshot"));
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const sinon = require("sinon");
 
 const createMiddleware = require("../lib/assetMiddleware");
+const ImportResolver = require("../lib/ImportResolver");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
@@ -21,12 +23,27 @@ function createMockPathMonitor() {
 }
 
 describe("asset middleware", function() {
+  it("should throw if a node_modules folder cannot be located", () => {
+    const servePath = fs.realpathSync(os.tmpdir());
+
+    expect(
+      () => {
+        createMiddleware({ servePath });
+      },
+      "to throw",
+      "unable to determine nearest node_modules"
+    );
+  });
+
   describe("when serving node_modules", function() {
     let middleware;
 
     beforeEach(function() {
+      const servePath = TEST_DATA_EXAMPLE_NPM;
+      const importResolver = new ImportResolver({ servePath });
       const result = createMiddleware({
-        servePath: TEST_DATA_EXAMPLE_MODULE,
+        importResolver,
+        servePath,
         pathMonitor: {}
       });
       middleware = result.middleware;
@@ -35,7 +52,7 @@ describe("asset middleware", function() {
     it("should respond with a 200 and content-type of application/json", async function() {
       await expect(middleware, "to yield exchange", {
         request: {
-          url: "/__node_modules/unexpected"
+          url: "/__node_modules/unexpected/build/lib/index.js"
         },
         response: {
           statusCode: 200,
@@ -95,6 +112,17 @@ describe("asset middleware", function() {
           headers: {
             "Content-Type": "application/javascript; charset=utf-8"
           }
+        }
+      });
+    });
+
+    it("should respond with a 404 for a missing file", async function() {
+      await expect(middleware, "to yield exchange", {
+        request: {
+          url: "/__node_modules/@depository/store/dist/index.js"
+        },
+        response: {
+          statusCode: 404
         }
       });
     });
