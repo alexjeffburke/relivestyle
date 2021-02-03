@@ -14,6 +14,11 @@ const TEST_DATA = path.join(__dirname, "..", "testdata");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
 const TEST_DATA_EXAMPLE_NPM = path.join(TEST_DATA, "example-npm");
 const TEST_DATA_EXAMPLE_RELATIONS = path.join(TEST_DATA, "example-relations");
+const TEST_DATA_EXAMPLE_WORKSPACES_DEMO_DIR = path.join(
+  TEST_DATA,
+  "example-workspaces",
+  "demo"
+);
 
 function createMockPathMonitor() {
   return {
@@ -81,6 +86,27 @@ describe("asset middleware", function() {
       await expect(middleware, "to yield exchange", {
         request: {
           url: "/__node_modules/@depository/store/dist/store.esm.js"
+        },
+        response: {
+          statusCode: 200,
+          headers: {
+            "Content-Type": "application/javascript; charset=utf-8"
+          }
+        }
+      });
+    });
+
+    it("should respond for a package syminked within a workspace", async function() {
+      const servePath = TEST_DATA_EXAMPLE_WORKSPACES_DEMO_DIR;
+      const { middleware } = createMiddleware({
+        importResolver: new ImportResolver({ servePath }),
+        servePath,
+        pathMonitor: {}
+      });
+
+      await expect(middleware, "to yield exchange", {
+        request: {
+          url: "/__node_modules/~/1/packages/utils/index.js"
         },
         response: {
           statusCode: 200,

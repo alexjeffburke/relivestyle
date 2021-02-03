@@ -6,6 +6,12 @@ const path = require("path");
 const ImportResolver = require("../lib/ImportResolver");
 
 const ROOT_DIR = path.join(__dirname, "..");
+const EXAMPLE_WORKSPACES_DEMO_DIR = path.join(
+  ROOT_DIR,
+  "testdata",
+  "example-workspaces",
+  "demo"
+);
 
 describe("ImportResolver", () => {
   let rewriter;
@@ -109,5 +115,41 @@ describe("ImportResolver", () => {
     const output = await rewriter.rewrite(input);
 
     expect(output, "to equal", "");
+  });
+
+  describe("within a monorepo", () => {
+    it("should rewrite namespaced monorepo node_modules imports", async () => {
+      const input = 'import bits from "@namespace/utils";';
+
+      const output = await new ImportResolver({
+        servePath: EXAMPLE_WORKSPACES_DEMO_DIR,
+        isMonorepo: true
+      }).rewrite(input);
+
+      expect(
+        output,
+        "to equal snapshot",
+        expect.unindent`
+              import bits from "/__node_modules/~/1/packages/utils/index.js";
+              `
+      );
+    });
+
+    it("should rewrite node_modules imports without directory traversal", async () => {
+      const input = 'import bits from "htm/preact";';
+
+      const output = await new ImportResolver({
+        servePath: EXAMPLE_WORKSPACES_DEMO_DIR,
+        isMonorepo: true
+      }).rewrite(input);
+
+      expect(
+        output,
+        "to equal snapshot",
+        expect.unindent`
+              import bits from "/__node_modules/htm/preact/index.module.js";
+              `
+      );
+    });
   });
 });
