@@ -1,0 +1,5 @@
+{
+  "name": "@namespace/utils",
+  "type": "module",
+  "module": "index.js"
+}

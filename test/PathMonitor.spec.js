@@ -365,6 +365,28 @@ describe("PathMonitor", () => {
       );
     });
 
+    it("should rewrite node_modules imports in a workspace", async () => {
+      const assetPath = "/index.js";
+      const servePath = path.join(TEST_DATA, "example-workspaces", "demo");
+      const importResolver = new ImportResolver({
+        isMonorepo: true,
+        servePath
+      });
+      instance = new PathMonitor({ importResolver, servePath });
+
+      const { asset } = await instance.loadJsAssetAndPopulate(assetPath);
+
+      expect(
+        asset.text,
+        "to equal snapshot",
+        expect.unindent`
+        // eslint-disable-next-line import/no-named-default
+        import { default as hello } from '/__node_modules/~/1/packages/utils/index.js';
+        console.log(hello);
+      `
+      );
+    });
+
     it("should pass through relative imports", async () => {
       const assetPath = "/stuff.js";
       const servePath = path.join(TEST_DATA, "example-module");

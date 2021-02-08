@@ -14,9 +14,9 @@ const TEST_DATA = path.join(__dirname, "..", "testdata");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
 const TEST_DATA_EXAMPLE_NPM = path.join(TEST_DATA, "example-npm");
 const TEST_DATA_EXAMPLE_RELATIONS = path.join(TEST_DATA, "example-relations");
-const TEST_DATA_EXAMPLE_WORKSPACES_DEMO_DIR = path.join(
+const TEST_DATA_EXAMPLE_LERNA_DEMO_DIR = path.join(
   TEST_DATA,
-  "example-workspaces",
+  "example-lerna",
   "demo"
 );
 
@@ -96,17 +96,17 @@ describe("asset middleware", function() {
       });
     });
 
-    it("should respond for a package syminked within a workspace", async function() {
-      const servePath = TEST_DATA_EXAMPLE_WORKSPACES_DEMO_DIR;
+    it("should respond for a nested path within a workspace", async function() {
+      const servePath = TEST_DATA_EXAMPLE_LERNA_DEMO_DIR;
       const { middleware } = createMiddleware({
-        importResolver: new ImportResolver({ servePath }),
+        importResolver: new ImportResolver({ isMonorepo: true, servePath }),
         servePath,
         pathMonitor: {}
       });
 
       await expect(middleware, "to yield exchange", {
         request: {
-          url: "/__node_modules/~/1/packages/utils/index.js"
+          url: "/__node_modules/~/1/packages/internals/index.js"
         },
         response: {
           statusCode: 200,

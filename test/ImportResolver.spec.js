@@ -6,6 +6,18 @@ const path = require("path");
 const ImportResolver = require("../lib/ImportResolver");
 
 const ROOT_DIR = path.join(__dirname, "..");
+const EXAMPLE_LERNA_DEMO_DIR = path.join(
+  ROOT_DIR,
+  "testdata",
+  "example-lerna",
+  "demo"
+);
+const EXAMPLE_LERNA_PACKAGE_INTERNALS = path.join(
+  EXAMPLE_LERNA_DEMO_DIR,
+  "..",
+  "packages",
+  "internals"
+);
 const EXAMPLE_WORKSPACES_DEMO_DIR = path.join(
   ROOT_DIR,
   "testdata",
@@ -131,6 +143,24 @@ describe("ImportResolver", () => {
         "to equal snapshot",
         expect.unindent`
               import bits from "/__node_modules/~/1/packages/utils/index.js";
+              `
+      );
+    });
+
+    it("should rewrite namespaced monorepo node_modules nested imports", async () => {
+      const input = 'import { hello } from "@namespace/utils";';
+
+      const output = await new ImportResolver({
+        rootDir: EXAMPLE_LERNA_DEMO_DIR,
+        servePath: EXAMPLE_LERNA_PACKAGE_INTERNALS,
+        isMonorepo: true
+      }).rewrite(input);
+
+      expect(
+        output,
+        "to equal snapshot",
+        expect.unindent`
+              import { hello } from "/__node_modules/~/1/packages/utils/index.js";
               `
       );
     });
