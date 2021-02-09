@@ -15,6 +15,8 @@ The server watches the pages and related assets that make up your small
 project and instantly reloads any browser that accessed them whenever
 changes to the on-disk files are detected.
 
+The project works correctly with workspaces and lerna based monorepos.
+
 ## Background
 
 Modern JavaScript tooling is extremely powerful but often represents a
