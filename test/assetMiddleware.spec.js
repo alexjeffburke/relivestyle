@@ -68,10 +68,10 @@ describe("asset middleware", function() {
       });
     });
 
-    it("should respond for a path nested within a package", async function() {
+    it("should respond for a nested path within a namespaced package", async function() {
       await expect(middleware, "to yield exchange", {
         request: {
-          url: "/__node_modules/sockette/dist/sockette.min.js"
+          url: "/__node_modules/@depository/store/dist/store.esm.js"
         },
         response: {
           statusCode: 200,
@@ -82,10 +82,17 @@ describe("asset middleware", function() {
       });
     });
 
-    it("should respond for a nested path within a namespaced package", async function() {
+    it("should respond for a hoisted path within a workspace", async function() {
+      const servePath = TEST_DATA_EXAMPLE_LERNA_DEMO_DIR;
+      const { middleware } = createMiddleware({
+        importResolver: new ImportResolver({ isMonorepo: true, servePath }),
+        servePath,
+        pathMonitor: {}
+      });
+
       await expect(middleware, "to yield exchange", {
         request: {
-          url: "/__node_modules/@depository/store/dist/store.esm.js"
+          url: "/__node_modules/htm/preact/index.module.js"
         },
         response: {
           statusCode: 200,
@@ -124,6 +131,20 @@ describe("asset middleware", function() {
         },
         response: {
           body: expect.it("to contain", "/__node_modules/")
+        }
+      });
+    });
+
+    it("should respond for the internal socket module", async function() {
+      await expect(middleware, "to yield exchange", {
+        request: {
+          url: "/__node_modules/sockette/dist/sockette.min.js"
+        },
+        response: {
+          statusCode: 200,
+          headers: {
+            "Content-Type": "application/javascript; charset=utf-8"
+          }
         }
       });
     });
