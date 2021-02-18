@@ -563,6 +563,25 @@ describe("PathMonitor", () => {
 
       expect(client.unseenChangesByAssetPath, "to equal", {});
     });
+
+    describe("when permitting client side routing", () => {
+      it("should normalise a missing client path", async () => {
+        const servePath = path.join(TEST_DATA, "example-index");
+        instance = new PathMonitor({
+          servePath,
+          permitClientSideRouting: true
+        });
+        sinon.spy(instance, "_linkClientHandleOrphans");
+        const leafPath = "/index.html";
+        await instance.loadAsset(leafPath);
+        const client = new Client({});
+
+        client.clientState = "active";
+        instance.linkClient(client, "/stuff");
+
+        expect(instance.clientAssets.get(client), "to equal", "/index.html");
+      });
+    });
   });
 
   describe("#notifyClientForFsPath", () => {

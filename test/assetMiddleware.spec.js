@@ -344,6 +344,25 @@ describe("asset middleware", function() {
         }
       });
     });
+
+    describe("when permitting client side routing", () => {
+      it("should respond with index.html if the file does not exist", async () => {
+        const { middleware } = createMiddleware({
+          servePath: path.join(TEST_DATA, "example-index"),
+          pathMonitor,
+          permitClientSideRouting: true
+        });
+
+        await expect(middleware, "to yield exchange", {
+          request: {
+            url: "/stuff"
+          },
+          response: {
+            statusCode: 200
+          }
+        });
+      });
+    });
   });
 
   describe("when serving JS", function() {

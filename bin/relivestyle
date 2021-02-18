@@ -30,6 +30,10 @@ const configureArgs = () => yargs =>
     .option("always", {
       type: "boolean",
       describe: "Disable update tracking and reload clients on every change."
+    })
+    .option("single", {
+      type: "boolean",
+      describe: "Rewrite requests without extension to index.html if not found"
     });
 
 const processArgs = () =>
