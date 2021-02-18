@@ -84,15 +84,40 @@ describe("asset middleware", function() {
 
     it("should respond for a hoisted path within a workspace", async function() {
       const servePath = TEST_DATA_EXAMPLE_LERNA_DEMO_DIR;
+      const isMonorepo = true;
       const { middleware } = createMiddleware({
-        importResolver: new ImportResolver({ isMonorepo: true, servePath }),
+        importResolver: new ImportResolver({ isMonorepo, servePath }),
+        pathMonitor: {},
         servePath,
-        pathMonitor: {}
+        isMonorepo
       });
 
       await expect(middleware, "to yield exchange", {
         request: {
           url: "/__node_modules/htm/preact/index.module.js"
+        },
+        response: {
+          statusCode: 200,
+          headers: {
+            "Content-Type": "application/javascript; charset=utf-8"
+          }
+        }
+      });
+    });
+
+    it("should respond for a hoisted namespaced path within a workspace", async function() {
+      const servePath = TEST_DATA_EXAMPLE_LERNA_DEMO_DIR;
+      const isMonorepo = true;
+      const { middleware } = createMiddleware({
+        importResolver: new ImportResolver({ isMonorepo, servePath }),
+        pathMonitor: {},
+        servePath,
+        isMonorepo
+      });
+
+      await expect(middleware, "to yield exchange", {
+        request: {
+          url: "/__node_modules/@nano-router/router/src/index.js"
         },
         response: {
           statusCode: 200,
