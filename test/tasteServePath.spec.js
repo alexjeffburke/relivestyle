@@ -1,4 +1,6 @@
 const expect = require("unexpected");
+const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
 const { tasteServePath } = require("../lib/tasteServePath");
@@ -16,6 +18,18 @@ const TEST_DATA_EXAMPLE_WORKSPACES_DEMO_DIR = path.join(
 );
 
 describe("tasteServePath", () => {
+  it("should throw if a node_modules folder cannot be located", () => {
+    const servePath = fs.realpathSync(os.tmpdir());
+
+    expect(
+      () => {
+        tasteServePath(servePath);
+      },
+      "to throw",
+      "unable to determine nearest node_modules"
+    );
+  });
+
   describe("lerna", () => {
     it("should return true at the top-level", () => {
       const { isMonorepo } = tasteServePath(TEST_DATA_EXAMPLE_LERNA);

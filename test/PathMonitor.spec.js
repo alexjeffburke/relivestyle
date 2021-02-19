@@ -8,8 +8,13 @@ const sinon = require("sinon");
 const Client = require("../lib/Client");
 const ImportResolver = require("../lib/ImportResolver");
 const PathMonitor = require("../lib/PathMonitor");
+const { determineNearestNodeModules } = require("../lib/tasteServePath");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
+
+function toNodeModulesPath(servePath) {
+  return determineNearestNodeModules(servePath).nodeModulesPath;
+}
 
 const waitImmediate = () => new Promise(resolve => setImmediate(resolve));
 
@@ -345,7 +350,8 @@ describe("PathMonitor", () => {
     it("should rewrite node_modules imports", async () => {
       const assetPath = "/stuff.js";
       const servePath = path.join(TEST_DATA, "example-npm");
-      const importResolver = new ImportResolver({ servePath });
+      const nodeModulesPath = toNodeModulesPath(servePath);
+      const importResolver = new ImportResolver({ servePath, nodeModulesPath });
       instance = new PathMonitor({ importResolver, servePath });
 
       const { asset } = await instance.loadJsAssetAndPopulate(assetPath);
@@ -368,9 +374,11 @@ describe("PathMonitor", () => {
     it("should rewrite node_modules imports in a workspace", async () => {
       const assetPath = "/index.js";
       const servePath = path.join(TEST_DATA, "example-workspaces", "demo");
+      const nodeModulesPath = toNodeModulesPath(servePath);
       const importResolver = new ImportResolver({
         isMonorepo: true,
-        servePath
+        servePath,
+        nodeModulesPath
       });
       instance = new PathMonitor({ importResolver, servePath });
 
@@ -390,8 +398,9 @@ describe("PathMonitor", () => {
     it("should pass through relative imports", async () => {
       const assetPath = "/stuff.js";
       const servePath = path.join(TEST_DATA, "example-module");
+      const nodeModulesPath = toNodeModulesPath(servePath);
       const diskPath = path.join(servePath, assetPath.slice(1));
-      const importResolver = new ImportResolver({ servePath });
+      const importResolver = new ImportResolver({ servePath, nodeModulesPath });
       instance = new PathMonitor({ importResolver, servePath });
 
       const record = await instance.loadJsAssetAndPopulate(assetPath);
@@ -405,7 +414,11 @@ describe("PathMonitor", () => {
       it("should reload the asset", async () => {
         const assetPath = "/stuff.js";
         const servePath = path.join(TEST_DATA, "example-module");
-        const importResolver = new ImportResolver({ servePath });
+        const nodeModulesPath = toNodeModulesPath(servePath);
+        const importResolver = new ImportResolver({
+          servePath,
+          nodeModulesPath
+        });
         instance = new PathMonitor({ importResolver, servePath });
         await instance.loadJsAssetAndPopulate(assetPath);
         instance.loadedByAssetPath[assetPath].asset.text = "EEK";
@@ -764,7 +777,8 @@ describe("PathMonitor", () => {
   describe("#notifyClientForFsPathDelete", () => {
     it("should remove the asset", async () => {
       const servePath = path.join(TEST_DATA, "example-relations");
-      const importResolver = new ImportResolver({ servePath });
+      const nodeModulesPath = toNodeModulesPath(servePath);
+      const importResolver = new ImportResolver({ servePath, nodeModulesPath });
       instance = new PathMonitor({ importResolver, servePath });
 
       const leafPath = "/stuff.html";
@@ -816,7 +830,8 @@ describe("PathMonitor", () => {
 
     it("should ignore an orphaned related asset", async () => {
       const servePath = path.join(TEST_DATA, "example-relations");
-      const importResolver = new ImportResolver({ servePath });
+      const nodeModulesPath = toNodeModulesPath(servePath);
+      const importResolver = new ImportResolver({ servePath, nodeModulesPath });
       instance = new PathMonitor({ importResolver, servePath });
       sinon.spy(instance, "informClients");
       const leafPath = "/stuff.html";
@@ -844,7 +859,11 @@ describe("PathMonitor", () => {
     describe("when alwaysUpdateClients", () => {
       it("should send reload messages to every client", async () => {
         const servePath = path.join(TEST_DATA, "example-relations");
-        const importResolver = new ImportResolver({ servePath });
+        const nodeModulesPath = toNodeModulesPath(servePath);
+        const importResolver = new ImportResolver({
+          servePath,
+          nodeModulesPath
+        });
         instance = new PathMonitor({
           importResolver,
           servePath,

@@ -3,12 +3,12 @@ const expect = require("unexpected")
   .use(require("unexpected-express"))
   .use(require("unexpected-snapshot"));
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
 const sinon = require("sinon");
 
 const createMiddleware = require("../lib/assetMiddleware");
 const ImportResolver = require("../lib/ImportResolver");
+const { determineNearestNodeModules } = require("../lib/tasteServePath");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
@@ -27,29 +27,23 @@ function createMockPathMonitor() {
   };
 }
 
+function toNodeModulesPath(servePath) {
+  return determineNearestNodeModules(servePath).nodeModulesPath;
+}
+
 describe("asset middleware", function() {
-  it("should throw if a node_modules folder cannot be located", () => {
-    const servePath = fs.realpathSync(os.tmpdir());
-
-    expect(
-      () => {
-        createMiddleware({ servePath });
-      },
-      "to throw",
-      "unable to determine nearest node_modules"
-    );
-  });
-
   describe("when serving node_modules", function() {
     let middleware;
 
     beforeEach(function() {
       const servePath = TEST_DATA_EXAMPLE_NPM;
-      const importResolver = new ImportResolver({ servePath });
+      const nodeModulesPath = toNodeModulesPath(servePath);
+      const importResolver = new ImportResolver({ servePath, nodeModulesPath });
       const result = createMiddleware({
         importResolver,
+        pathMonitor: {},
         servePath,
-        pathMonitor: {}
+        nodeModulesPath
       });
       middleware = result.middleware;
     });
@@ -84,17 +78,21 @@ describe("asset middleware", function() {
 
     it("should respond for a hoisted path within a workspace", async function() {
       const servePath = TEST_DATA_EXAMPLE_LERNA_DEMO_DIR;
-      const isMonorepo = true;
+      const nodeModulesPath = toNodeModulesPath(servePath);
       const { middleware } = createMiddleware({
-        importResolver: new ImportResolver({ isMonorepo, servePath }),
+        importResolver: new ImportResolver({
+          isMonorepo: true,
+          servePath,
+          nodeModulesPath
+        }),
         pathMonitor: {},
         servePath,
-        isMonorepo
+        nodeModulesPath
       });
 
       await expect(middleware, "to yield exchange", {
         request: {
-          url: "/__node_modules/htm/preact/index.module.js"
+          url: "/__node_modules/~/3/node_modules/htm/preact/index.module.js"
         },
         response: {
           statusCode: 200,
@@ -107,17 +105,22 @@ describe("asset middleware", function() {
 
     it("should respond for a hoisted namespaced path within a workspace", async function() {
       const servePath = TEST_DATA_EXAMPLE_LERNA_DEMO_DIR;
-      const isMonorepo = true;
+      const nodeModulesPath = toNodeModulesPath(servePath);
       const { middleware } = createMiddleware({
-        importResolver: new ImportResolver({ isMonorepo, servePath }),
+        importResolver: new ImportResolver({
+          isMonorepo: true,
+          servePath,
+          nodeModulesPath
+        }),
         pathMonitor: {},
         servePath,
-        isMonorepo
+        nodeModulesPath
       });
 
       await expect(middleware, "to yield exchange", {
         request: {
-          url: "/__node_modules/@nano-router/router/src/index.js"
+          url:
+            "/__node_modules/~/3/node_modules/@nano-router/router/src/index.js"
         },
         response: {
           statusCode: 200,
@@ -130,10 +133,16 @@ describe("asset middleware", function() {
 
     it("should respond for a nested path within a workspace", async function() {
       const servePath = TEST_DATA_EXAMPLE_LERNA_DEMO_DIR;
+      const nodeModulesPath = toNodeModulesPath(servePath);
       const { middleware } = createMiddleware({
-        importResolver: new ImportResolver({ isMonorepo: true, servePath }),
+        importResolver: new ImportResolver({
+          isMonorepo: true,
+          servePath,
+          nodeModulesPath
+        }),
+        pathMonitor: {},
         servePath,
-        pathMonitor: {}
+        nodeModulesPath
       });
 
       await expect(middleware, "to yield exchange", {

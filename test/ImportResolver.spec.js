@@ -4,6 +4,7 @@ const expect = require("unexpected")
 const path = require("path");
 
 const ImportResolver = require("../lib/ImportResolver");
+const { determineNearestNodeModules } = require("../lib/tasteServePath");
 
 const ROOT_DIR = path.join(__dirname, "..");
 const EXAMPLE_LERNA_DEMO_DIR = path.join(
@@ -25,24 +26,37 @@ const EXAMPLE_WORKSPACES_DEMO_DIR = path.join(
   "demo"
 );
 
+function toNodeModulesPath(servePath) {
+  return determineNearestNodeModules(servePath).nodeModulesPath;
+}
+
 describe("ImportResolver", () => {
   let rewriter;
 
   beforeEach(() => {
-    rewriter = new ImportResolver({ servePath: ROOT_DIR });
+    rewriter = new ImportResolver({
+      servePath: ROOT_DIR,
+      nodeModulesPath: toNodeModulesPath(ROOT_DIR)
+    });
   });
 
-  it("should rewrite node_modules imports with single quote", async () => {
-    const input = "import bits from 'htm/preact';";
-
-    const output = await rewriter.rewrite(input);
-
+  it("should throw on a missing serve path", async () => {
     expect(
-      output,
-      "to equal snapshot",
-      expect.unindent`
-            import bits from '/__node_modules/htm/preact/index.module.js';
-            `
+      () => {
+        new ImportResolver();
+      },
+      "to throw",
+      "ImportResolver: missing serve path"
+    );
+  });
+
+  it("should throw on a missing node_modules path", async () => {
+    expect(
+      () => {
+        new ImportResolver({ servePath: ROOT_DIR });
+      },
+      "to throw",
+      "ImportResolver: missing node modules path"
     );
   });
 
@@ -129,12 +143,52 @@ describe("ImportResolver", () => {
     expect(output, "to equal", "");
   });
 
+  it("should reject if the module could not be resolved (missing monorepo flag)", async () => {
+    const input = "import bits from '@namespace/internals'";
+    const brokenModulePath = path.join(
+      EXAMPLE_LERNA_DEMO_DIR,
+      "../packages/internals/index.js"
+    );
+
+    const rewriter = new ImportResolver({
+      servePath: EXAMPLE_LERNA_DEMO_DIR,
+      nodeModulesPath: toNodeModulesPath(EXAMPLE_LERNA_DEMO_DIR)
+    });
+
+    await expect(
+      () => rewriter.rewrite(input),
+      "to be rejected with",
+      `invalid module path "${brokenModulePath}"`
+    );
+  });
+
+  describe("when hoisted", () => {
+    it("should rewrite node_modules imports with single quote", async () => {
+      const input = "import bits from '@nano-router/router';";
+
+      const rewriter = new ImportResolver({
+        servePath: EXAMPLE_LERNA_DEMO_DIR,
+        nodeModulesPath: toNodeModulesPath(EXAMPLE_LERNA_DEMO_DIR)
+      });
+      const output = await rewriter.rewrite(input);
+
+      expect(
+        output,
+        "to equal snapshot",
+        expect.unindent`
+              import bits from '/__node_modules/~/3/node_modules/@nano-router/router/src/index.js';
+              `
+      );
+    });
+  });
+
   describe("within a monorepo", () => {
     it("should rewrite namespaced monorepo node_modules imports", async () => {
       const input = 'import bits from "@namespace/utils";';
 
       const output = await new ImportResolver({
         servePath: EXAMPLE_WORKSPACES_DEMO_DIR,
+        nodeModulesPath: toNodeModulesPath(EXAMPLE_WORKSPACES_DEMO_DIR),
         isMonorepo: true
       }).rewrite(input);
 
@@ -153,6 +207,7 @@ describe("ImportResolver", () => {
       const output = await new ImportResolver({
         rootDir: EXAMPLE_LERNA_DEMO_DIR,
         servePath: EXAMPLE_LERNA_PACKAGE_INTERNALS,
+        nodeModulesPath: toNodeModulesPath(EXAMPLE_LERNA_PACKAGE_INTERNALS),
         isMonorepo: true
       }).rewrite(input);
 
@@ -160,16 +215,17 @@ describe("ImportResolver", () => {
         output,
         "to equal snapshot",
         expect.unindent`
-              import { hello } from "/__node_modules/~/1/packages/utils/index.js";
+              import { hello } from "/__node_modules/~/1/packages/utils/lib/index.js";
               `
       );
     });
 
-    it("should rewrite node_modules imports without directory traversal", async () => {
+    it("should rewrite hoisted node_modules imports", async () => {
       const input = 'import bits from "htm/preact";';
 
       const output = await new ImportResolver({
         servePath: EXAMPLE_WORKSPACES_DEMO_DIR,
+        nodeModulesPath: toNodeModulesPath(EXAMPLE_WORKSPACES_DEMO_DIR),
         isMonorepo: true
       }).rewrite(input);
 
@@ -177,7 +233,25 @@ describe("ImportResolver", () => {
         output,
         "to equal snapshot",
         expect.unindent`
-              import bits from "/__node_modules/htm/preact/index.module.js";
+              import bits from "/__node_modules/~/3/node_modules/htm/preact/index.module.js";
+              `
+      );
+    });
+
+    it("should rewrite hoisted namespaced node_modules imports", async () => {
+      const input = 'import bits from "@nano-router/router";';
+
+      const output = await new ImportResolver({
+        servePath: EXAMPLE_WORKSPACES_DEMO_DIR,
+        nodeModulesPath: toNodeModulesPath(EXAMPLE_WORKSPACES_DEMO_DIR),
+        isMonorepo: true
+      }).rewrite(input);
+
+      expect(
+        output,
+        "to equal snapshot",
+        expect.unindent`
+              import bits from "/__node_modules/~/3/node_modules/@nano-router/router/src/index.js";
               `
       );
     });
