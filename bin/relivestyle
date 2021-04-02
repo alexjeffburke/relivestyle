@@ -34,6 +34,10 @@ const configureArgs = () => yargs =>
     .option("single", {
       type: "boolean",
       describe: "Rewrite requests without extension to index.html if not found"
+    })
+    .option("cors", {
+      type: "boolean",
+      describe: "Enable CORS, sets `Access-Control-Allow-Origin` to `*`."
     });
 
 const processArgs = () =>

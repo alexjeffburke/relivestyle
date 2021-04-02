@@ -1,4 +1,6 @@
+const expect = require("unexpected");
 const fs = require("fs");
+const http = require("http");
 const path = require("path");
 const WebSocket = require("ws");
 
@@ -19,7 +21,7 @@ function runBlockInServer(server, blockFn) {
     server.listen(0, resolve);
   })
     .then(() => blockFn(server.address()))
-    .then(() => closeServer())
+    .then(result => closeServer().then(() => result))
     .catch(e =>
       closeServer().then(() => {
         throw e;
@@ -43,6 +45,33 @@ describe("Server", () => {
         ws.on("open", () => {
           resolve();
         });
+      });
+    });
+  });
+
+  describe("when CORS is enabled", () => {
+    it("should add the appropriate header", async () => {
+      const servePath = path.join(TEST_DATA, "example-project");
+
+      const pathMonitor = new PathMonitor({ servePath });
+      const server = new Server({ pathMonitor, servePath, enableCors: true });
+
+      const res = await runBlockInServer(server, address => {
+        return new Promise((resolve, reject) => {
+          const req = http.get(
+            { path: "/other.txt", port: address.port },
+            res => {
+              res.on("end", () => resolve(res));
+              res.resume();
+            }
+          );
+          req.on("error", error => reject(error));
+          req.end();
+        });
+      });
+
+      expect(res.headers, "to satisfy", {
+        "access-control-allow-origin": "*"
       });
     });
   });
