@@ -319,6 +319,31 @@ describe("PathMonitor", () => {
       });
     });
 
+    it("should rewrite inline script imports", async () => {
+      const assetPath = "/index.html";
+      const servePath = path.join(TEST_DATA, "example-image");
+      const nodeModulesPath = toNodeModulesPath(servePath);
+      const importResolver = new ImportResolver({ servePath, nodeModulesPath });
+      instance = new PathMonitor({ importResolver, servePath });
+
+      const { asset } = await instance.loadHtmlAssetAndPopulate(assetPath);
+
+      expect(
+        asset.text,
+        "to equal snapshot",
+        expect.unindent`
+          <html><head></head><body>
+                  <script type="module">import { lasercat } from '/__node_modules/catimages/index.js';
+          const img = document.createElement('img');
+          img.src = lasercat;
+          document.body.appendChild(img);</script>
+          ${"    "}
+
+          </body></html>
+        `
+      );
+    });
+
     it("should ignore node resolution that returns a non-HTML asset", async () => {
       const assetPath = "/stuff.html";
       const servePath = path.join(TEST_DATA, "example-badresolve");
