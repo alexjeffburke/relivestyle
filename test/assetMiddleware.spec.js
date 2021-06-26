@@ -11,6 +11,7 @@ const ImportResolver = require("../lib/ImportResolver");
 const { determineNearestNodeModules } = require("../lib/tasteServePath");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
+const TEST_DATA_EXAMPLE_IMAGE = path.join(TEST_DATA, "example-image");
 const TEST_DATA_EXAMPLE_MODULE = path.join(TEST_DATA, "example-module");
 const TEST_DATA_EXAMPLE_NPM = path.join(TEST_DATA, "example-npm");
 const TEST_DATA_EXAMPLE_RELATIONS = path.join(TEST_DATA, "example-relations");
@@ -35,8 +36,7 @@ describe("asset middleware", function() {
   describe("when serving node_modules", function() {
     let middleware;
 
-    beforeEach(function() {
-      const servePath = TEST_DATA_EXAMPLE_NPM;
+    function middlewareForServePath(servePath) {
       const nodeModulesPath = toNodeModulesPath(servePath);
       const importResolver = new ImportResolver({ servePath, nodeModulesPath });
       const result = createMiddleware({
@@ -45,10 +45,14 @@ describe("asset middleware", function() {
         servePath,
         nodeModulesPath
       });
-      middleware = result.middleware;
+      return result.middleware;
+    }
+
+    beforeEach(() => {
+      middleware = middlewareForServePath(TEST_DATA_EXAMPLE_NPM);
     });
 
-    it("should respond with a 200 and content-type of application/json", async function() {
+    it("should respond with a 200 and content-type of application/javascript", async function() {
       await expect(middleware, "to yield exchange", {
         request: {
           url: "/__node_modules/unexpected/build/lib/index.js"
@@ -205,6 +209,33 @@ describe("asset middleware", function() {
         response: {
           statusCode: 404
         }
+      });
+    });
+
+    describe("when node_modules has non-JavaScript content", () => {
+      beforeEach(() => {
+        middleware = middlewareForServePath(TEST_DATA_EXAMPLE_IMAGE);
+      });
+
+      it("should serve an image/gif", async function() {
+        await expect(middleware, "to yield exchange", {
+          request: {
+            url: "/__node_modules/catimages/lasercat.gif"
+          },
+          response: {
+            statusCode: 200,
+            headers: {
+              "Content-Type": /^image\/gif/
+            },
+            body: expect.it("to be a", Buffer).and(buffer => {
+              expect(
+                buffer.slice(0, 5),
+                "to equal",
+                Buffer.from("GIF89", "ascii")
+              );
+            })
+          }
+        });
       });
     });
   });
