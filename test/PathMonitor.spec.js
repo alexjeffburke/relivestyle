@@ -285,6 +285,16 @@ describe("PathMonitor", () => {
       });
     });
 
+    it('should work for modules within a directory containg an "@"', async () => {
+      const servePath = path.join(TEST_DATA, "example-index@");
+      instance = new PathMonitor({ servePath });
+      const assetPath = "/index.html";
+
+      const record = await instance.loadHtmlAssetAndPopulate(assetPath);
+
+      expect(record, "not to be null");
+    });
+
     it("should ignore population failures", async () => {
       const assetPath = "/stuff.html";
       const servePath = path.join(TEST_DATA, "example-badmodule");
