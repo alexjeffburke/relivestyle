@@ -2,6 +2,7 @@ const expect = require("unexpected")
   .clone()
   .use(require("unexpected-snapshot"));
 const fs = require("fs");
+const normalizeUrl = require("normalizeurl");
 const path = require("path");
 const sinon = require("sinon");
 
@@ -320,10 +321,10 @@ describe("PathMonitor", () => {
         });
         expect(assets, "to satisfy", [
           {
-            url: `file://${servePath}/stuff.js`
+            url: normalizeUrl(`file://${servePath}/stuff.js`)
           },
           {
-            url: `file://${servePath}/otherstuff.js`
+            url: normalizeUrl(`file://${servePath}/otherstuff.js`)
           }
         ]);
       });
@@ -475,7 +476,7 @@ describe("PathMonitor", () => {
       instance = new PathMonitor({ servePath });
       await instance.loadAsset(assetPath);
       const [asset] = instance.assetGraph.findAssets({
-        url: `file://${diskPath}`
+        url: normalizeUrl(`file://${diskPath}`)
       });
 
       const record = instance.getAsset(assetPath);

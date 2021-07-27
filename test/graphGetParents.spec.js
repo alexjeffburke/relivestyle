@@ -1,5 +1,6 @@
 const AssetGraph = require("assetgraph");
 const expect = require("unexpected");
+const normalizeUrl = require("normalizeurl");
 const path = require("path");
 
 const graphGetParents = require("../lib/graphGetParents");
@@ -57,11 +58,9 @@ describe("graphGetParents", () => {
         }
       });
 
-      scriptAsset = (
-        await graph.findAssets({
-          url: `file://${EXAMPLES_DIR}/nested.js`
-        })
-      )[0];
+      scriptAsset = graph.findAssets({
+        url: normalizeUrl(`file://${EXAMPLES_DIR}/nested.js`)
+      })[0];
     });
 
     it("should walk up multiple levels to an asset", async () => {
