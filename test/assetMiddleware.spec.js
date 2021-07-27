@@ -8,6 +8,7 @@ const sinon = require("sinon");
 
 const createMiddleware = require("../lib/assetMiddleware");
 const ImportResolver = require("../lib/ImportResolver");
+const PathMonitor = require("../lib/PathMonitor");
 const { determineNearestNodeModules } = require("../lib/tasteServePath");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
@@ -475,6 +476,92 @@ describe("asset middleware", function() {
             "Content-Type": "text/css"
           }
         }
+      });
+    });
+  });
+
+  describe("when paired with a real PathMonitor", () => {
+    describe("when serving HTML", () => {
+      it("should correctly generate an ETag", async function() {
+        const servePath = path.join(TEST_DATA, "example-index");
+        const { middleware } = createMiddleware({
+          servePath,
+          pathMonitor: new PathMonitor({
+            servePath,
+            importResolver: {
+              rewrite: () => ""
+            }
+          })
+        });
+
+        await expect(middleware, "to yield exchange", {
+          request: {
+            url: "/index.html"
+          },
+          response: {
+            statusCode: 200,
+            headers: {
+              "Content-Type": "text/html",
+              ETag: '"7847c27e9f8cb6da74f7b5572a51c601235e04e1"'
+            }
+          }
+        });
+      });
+    });
+
+    describe("when serving JS", () => {
+      it("should correctly generate an ETag", async function() {
+        const servePath = path.join(TEST_DATA, "example-delicate");
+        const { middleware } = createMiddleware({
+          servePath,
+          pathMonitor: new PathMonitor({
+            servePath,
+            importResolver: {
+              rewrite: () => ""
+            }
+          })
+        });
+
+        await expect(middleware, "to yield exchange", {
+          request: {
+            url: "/example.js"
+          },
+          response: {
+            statusCode: 200,
+            headers: {
+              "Content-Type": "application/javascript",
+              ETag: '"ad185e63393f77f73727b05bc345e9595d8c93d8"'
+            }
+          }
+        });
+      });
+    });
+
+    describe("when serving CSS", () => {
+      it("should correctly generate an ETag", async function() {
+        const servePath = path.join(TEST_DATA, "example-relations");
+        const { middleware } = createMiddleware({
+          servePath,
+          pathMonitor: new PathMonitor({
+            servePath,
+            importResolver: {
+              rewrite: () => ""
+            }
+          })
+        });
+
+        await expect(middleware, "to yield exchange", {
+          request: {
+            url: "/stuff.css"
+          },
+          response: {
+            statusCode: 200,
+            headers: {
+              "Content-Type": "text/css",
+              ETag: '"30681e85e6a19e7c02e5432d0984b31f66b5bb7f"'
+            }
+          }
+        });
       });
     });
   });

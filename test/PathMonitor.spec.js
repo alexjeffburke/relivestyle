@@ -396,14 +396,16 @@ describe("PathMonitor", () => {
         asset.text,
         "to equal snapshot",
         expect.unindent`
-        import {
-            html,
-            render
-        } from '/__node_modules/htm/preact/index.module.js';
-        render(html\`
-            <h1>Hello World</h1>
-          \`, document.getElementById('app-root'));
-      `
+          import { html, render } from "/__node_modules/htm/preact/index.module.js";
+
+          render(
+            html\`
+              <h1>Hello World</h1>
+            \`,
+            document.getElementById("app-root")
+          );
+
+        `
       );
     });
 
@@ -424,10 +426,12 @@ describe("PathMonitor", () => {
         asset.text,
         "to equal snapshot",
         expect.unindent`
-        // eslint-disable-next-line import/no-named-default
-        import { default as hello } from '/__node_modules/~/1/packages/utils/index.js';
-        console.log(hello);
-      `
+          // eslint-disable-next-line import/no-named-default
+          import { default as hello } from "/__node_modules/~/1/packages/utils/index.js";
+
+          console.log(hello);
+
+        `
       );
     });
 
@@ -464,6 +468,67 @@ describe("PathMonitor", () => {
 
         const { asset } = instance.loadedByAssetPath[assetPath];
         expect(asset.text, "not to contain", "EEK");
+      });
+    });
+
+    describe("with an asset that has delicate code", () => {
+      it("should use the raw text of the asset", async () => {
+        const assetPath = "/example.js";
+        const servePath = path.join(TEST_DATA, "example-delicate");
+        const nodeModulesPath = toNodeModulesPath(servePath);
+        const importResolver = new ImportResolver({
+          servePath,
+          nodeModulesPath
+        });
+        instance = new PathMonitor({ importResolver, servePath });
+        await instance.loadJsAssetAndPopulate(assetPath);
+
+        const { asset } = instance.loadedByAssetPath[assetPath];
+
+        expect(
+          asset.text,
+          "to equal snapshot",
+          expect.unindent`
+          /* eslint-disable */
+          // prettier-ignore
+          const MyComponent = () => {
+              return /*#__PURE__*/React.createElement(App, null);
+          };
+
+        `
+        );
+      });
+
+      it("should use the raw text of the asset when rewriting", async () => {
+        const assetPath = "/rewrite.js";
+        const servePath = path.join(TEST_DATA, "example-delicate");
+        const nodeModulesPath = toNodeModulesPath(servePath);
+        const importResolver = new ImportResolver({
+          servePath,
+          nodeModulesPath
+        });
+        instance = new PathMonitor({ importResolver, servePath });
+        await instance.loadJsAssetAndPopulate(assetPath);
+
+        const { asset } = instance.loadedByAssetPath[assetPath];
+
+        // eslint-disable-next-line no-unused-expressions
+        asset.text; // simulate first access
+
+        expect(
+          asset.text,
+          "to equal snapshot",
+          expect.unindent`
+          /* eslint-disable */
+          import { html, render } from "/__node_modules/htm/preact/index.module.js";
+
+          // prettier-ignore
+          const MyComponent = () => {
+              return /*#__PURE__*/React.createElement(App, null);
+          };
+
+        `
+        );
       });
     });
   });
