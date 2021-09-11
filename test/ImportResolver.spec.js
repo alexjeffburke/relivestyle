@@ -74,6 +74,20 @@ describe("ImportResolver", () => {
     );
   });
 
+  it("should rewrite node_modules imports with single quote", async () => {
+    const input = "import { FixedSizeGrid } from 'react-window';";
+
+    const output = await rewriter.rewrite(input);
+
+    expect(
+      output,
+      "to equal snapshot",
+      expect.unindent`
+            import { FixedSizeGrid } from '/__node_modules/react-window/dist/index.esm.js';
+            `
+    );
+  });
+
   it("should rewrite multiple node_modules imports", async () => {
     const input =
       'import bits from "htm/preact";\nimport bits from "unexpected";';
@@ -163,7 +177,7 @@ describe("ImportResolver", () => {
   });
 
   describe("when hoisted", () => {
-    it("should rewrite node_modules imports with single quote", async () => {
+    it("should rewrite namespaced node_modules imports", async () => {
       const input = "import bits from '@nano-router/router';";
 
       const rewriter = new ImportResolver({

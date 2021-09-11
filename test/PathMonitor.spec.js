@@ -383,8 +383,8 @@ describe("PathMonitor", () => {
   });
 
   describe("#loadJsAssetAndPopulate", () => {
-    it("should rewrite node_modules imports", async () => {
-      const assetPath = "/stuff.js";
+    it("should rewrite node_modules imports with double quote", async () => {
+      const assetPath = "/preact.js";
       const servePath = path.join(TEST_DATA, "example-npm");
       const nodeModulesPath = toNodeModulesPath(servePath);
       const importResolver = new ImportResolver({ servePath, nodeModulesPath });
@@ -404,6 +404,27 @@ describe("PathMonitor", () => {
             \`,
             document.getElementById("app-root")
           );
+
+        `
+      );
+    });
+
+    it("should rewrite node_modules imports with single quote", async () => {
+      const assetPath = "/react-window.js";
+      const servePath = path.join(TEST_DATA, "example-npm");
+      const nodeModulesPath = toNodeModulesPath(servePath);
+      const importResolver = new ImportResolver({ servePath, nodeModulesPath });
+      instance = new PathMonitor({ importResolver, servePath });
+
+      const { asset } = await instance.loadJsAssetAndPopulate(assetPath);
+
+      expect(
+        asset.text,
+        "to equal snapshot",
+        expect.unindent`
+          // prettier-ignore
+          // eslint-disable-next-line no-unused-vars
+          import { VariableSizeGrid } from '/__node_modules/react-window/dist/index.esm.js';
 
         `
       );
