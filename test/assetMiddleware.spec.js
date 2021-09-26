@@ -335,6 +335,22 @@ describe("asset middleware", function() {
       });
     });
 
+    it("should respond with a 404 if directory", async function() {
+      const { middleware } = createMiddleware({
+        servePath: TEST_DATA_EXAMPLE_INDEX,
+        pathMonitor
+      });
+
+      await expect(middleware, "to yield exchange", {
+        request: {
+          url: "/empty/"
+        },
+        response: {
+          statusCode: 404
+        }
+      });
+    });
+
     it("should respond with a 404 if loading fails", async function() {
       const { middleware } = createMiddleware({
         servePath: TEST_DATA_EXAMPLE_MODULE,

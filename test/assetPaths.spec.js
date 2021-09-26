@@ -4,6 +4,7 @@ const path = require("path");
 const assetPaths = require("../lib/assetPaths");
 
 const TEST_DATA = path.join(__dirname, "..", "testdata");
+const TEST_DATA_EXAMPLE_BADINDEX = path.join(TEST_DATA, "example-badindex");
 const TEST_DATA_EXAMPLE_INDEX = path.join(TEST_DATA, "example-index");
 const TEST_DATA_EXAMPLE_RELATIONS = path.join(TEST_DATA, "example-relations");
 
@@ -87,6 +88,30 @@ describe("assetPaths", () => {
       );
 
       expect(assetPath, "to equal", "/stuff");
+    });
+
+    describe("when index.html is a directory", () => {
+      it("should not return index.html when requesting /", async () => {
+        const inputPath = "/";
+
+        const assetPath = assetPaths.normalisePath(
+          inputPath,
+          TEST_DATA_EXAMPLE_BADINDEX
+        );
+
+        expect(assetPath, "to equal", "/");
+      });
+
+      it("should return adding html suffix for a file inside the directory", async () => {
+        const inputPath = "/index.html/stuff";
+
+        const assetPath = assetPaths.normalisePath(
+          inputPath,
+          TEST_DATA_EXAMPLE_BADINDEX
+        );
+
+        expect(assetPath, "to equal", "/index.html/stuff.html");
+      });
     });
 
     describe("with client side routing flag", () => {
